@@ -1,4 +1,11 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+    <File Path=".gitmodules" />
+    <File Path="LICENSE.txt" />
+    <File Path="README.md" />
+  </Folder>
   <Project Path="ScissorOutline/ScissorOutline.csproj" />
   <Project Path="YukkuriMovieMaker.Generator/YukkuriMovieMaker.Generator/YukkuriMovieMaker.Generator.csproj" />
   <Project Path="YukkuriMovieMaker.Generator/YukkuriMovieMaker.Generator.Build/YukkuriMovieMaker.Generator.Build.csproj">
