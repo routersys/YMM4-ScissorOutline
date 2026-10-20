@@ -1,3 +1,8 @@
 <Solution>
   <Project Path="ScissorOutline/ScissorOutline.csproj" />
+  <Project Path="YukkuriMovieMaker.Generator/YukkuriMovieMaker.Generator/YukkuriMovieMaker.Generator.csproj" />
+  <Project Path="YukkuriMovieMaker.Generator/YukkuriMovieMaker.Generator.Build/YukkuriMovieMaker.Generator.Build.csproj">
+    <BuildType Solution="*|*" Project="Debug" />
+    <Platform Solution="*|*" Project="Any CPU" />
+  </Project>
 </Solution>
