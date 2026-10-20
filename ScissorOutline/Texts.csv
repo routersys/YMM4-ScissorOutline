@@ -1,3 +1,30 @@
 Key,Parameter,ja-jp,en-us,zh-cn,zh-tw,ko-kr,es-es,ar-sa,id-id
-ScissorOutline,,ScissorOutline,ScissorOutline,ScissorOutline,ScissorOutline,ScissorOutline,ScissorOutline,ScissorOutline,ScissorOutline
+ScissorOutline,,縁取り（ハサミ）,Outline (Scissors),描边（剪刀）,描邊（剪刀）,테두리 (가위),Contorno (tijeras),تحديد (مقص),Garis tepi (gunting)
+BasicGroup,,基本,Basic,基本,基本,기본,Básico,أساسي,Dasar
+PaperGroup,,紙,Paper,纸,紙,종이,Papel,الورق,Kertas
+Thickness,,太さ,Thickness,粗度,粗細,두께,Grosor,السُمك,Ketebalan
+ThicknessDescription,,被写体の不透明な部分から切り口までの最小の距離です。0にすると映像をそのまま通します,The minimum distance from the opaque part of the subject to the cut. Set to 0 to pass the image through unchanged.,从被摄体不透明部分到切口的最小距离。设为0时直接输出原画面。,從被攝體不透明部分到切口的最小距離。設為0時直接輸出原畫面。,피사체의 불투명한 부분에서 절단선까지의 최소 거리입니다. 0으로 하면 영상을 그대로 통과시킵니다.,Distancia mínima desde la parte opaca del sujeto hasta el corte. Con 0 se deja pasar la imagen sin cambios.,أقل مسافة بين الجزء المعتم من العنصر وخط القص. القيمة 0 تمرر الصورة كما هي.,Jarak minimum dari bagian buram subjek ke potongan. Nilai 0 meneruskan gambar apa adanya.
+Coarseness,,大まかさ,Coarseness,粗略度,粗略度,거칠기,Tosquedad,الخشونة,Kekasaran
+CoarsenessDescription,,大きいほど切り口の辺が少なく長くなり、小さいほど輪郭に沿った細かい辺になります,"The larger the value, the fewer and longer the edges of the cut. The smaller the value, the finer the edges that follow the contour.","数值越大,切口的边越少越长;数值越小,边越细,越贴合轮廓。",數值越大，切口的邊越少越長；數值越小，邊越細，越貼合輪廓。,값이 클수록 절단선의 변이 적고 길어지며， 작을수록 윤곽을 따르는 잘고 많은 변이 됩니다.,"Cuanto mayor es el valor, menos y más largos son los lados del corte. Cuanto menor, más finos y ajustados al contorno.",كلما زادت القيمة قلّت أضلاع القص وطالت، وكلما قلّت صارت الأضلاع أدق وأقرب إلى الحدود.,"Semakin besar nilainya, sisi potongan semakin sedikit dan panjang. Semakin kecil, sisinya semakin halus mengikuti kontur."
+Tremor,,手ぶれ,Hand tremor,手抖,手抖,손떨림,Temblor de mano,ارتعاش اليد,Getaran tangan
+TremorDescription,,切り口の頂点を、位置ごとに決まった向きと量でずらす割合です。大きいほど切り口が不揃いになります,"The amount by which each vertex of the cut is shifted in a direction and distance fixed by its position. The larger the value, the more uneven the cut.","按位置确定的方向和距离移动切口顶点的比例。数值越大,切口越不规整。",按位置確定的方向和距離移動切口頂點的比例。數值越大，切口越不規整。,절단선의 꼭짓점을 위치마다 정해진 방향과 거리로 옮기는 비율입니다. 클수록 절단선이 고르지 않게 됩니다.,"Proporción en que cada vértice del corte se desplaza en una dirección y distancia fijadas por su posición. Cuanto mayor, más irregular es el corte.",نسبة إزاحة كل رأس من رؤوس القص باتجاه ومسافة تحددهما مواضعها. كلما زادت صار القص أقل انتظامًا.,"Rasio pergeseran setiap titik sudut potongan ke arah dan jarak yang ditentukan oleh posisinya. Semakin besar, potongan semakin tidak rata."
+Seed,,シード,Seed,种子,種子,시드,Semilla,البذرة,Seed
+SeedDescription,,手ぶれのずれ方を決める値です,The value that determines how the hand tremor shifts the vertices.,决定手抖偏移方式的值。,決定手抖偏移方式的值。,손떨림으로 꼭짓점이 어긋나는 방식을 정하는 값입니다.,Valor que determina cómo el temblor de mano desplaza los vértices.,القيمة التي تحدد كيفية إزاحة ارتعاش اليد للرؤوس.,Nilai yang menentukan cara getaran tangan menggeser titik sudut.
+FillHoles,,穴を埋める,Fill holes,填充孔洞,填充孔洞,구멍 채우기,Rellenar huecos,ملء الثقوب,Isi lubang
+FillHolesDescription,,紙の内側にできる穴を紙で埋めます。オフにすると、穴の縁もハサミで切った形になります,"Fills holes inside the paper with paper. When off, the edges of the holes are also cut with scissors.","用纸填充纸内侧出现的孔洞。关闭后,孔洞的边缘也会被剪成剪刀剪过的形状。",用紙填充紙內側出現的孔洞。關閉後，孔洞的邊緣也會被剪成剪刀剪過的形狀。,종이 안쪽에 생기는 구멍을 종이로 채웁니다. 끄면 구멍의 가장자리도 가위로 자른 모양이 됩니다.,"Rellena con papel los huecos del interior del papel. Si se desactiva, los bordes de los huecos también se cortan con tijeras.",يملأ الثقوب داخل الورق بالورق. عند الإيقاف تُقص حواف الثقوب أيضًا بالمقص.,"Mengisi lubang di dalam kertas dengan kertas. Jika dimatikan, tepi lubang juga dipotong dengan gunting."
+Quality,,品質,Quality,质量,品質,품질,Calidad,الجودة,Kualitas
+QualityDescription,,切り口の形を求める格子の細かさを選びます,Selects how fine the grid used to find the shape of the cut is.,选择用于求切口形状的网格的精细程度。,選擇用於求切口形狀的網格的精細程度。,절단선의 모양을 구하는 격자의 세밀함을 선택합니다.,Selecciona la finura de la cuadrícula con la que se calcula la forma del corte.,يحدد دقة الشبكة المستخدمة لحساب شكل القص.,Memilih kehalusan kisi yang digunakan untuk menentukan bentuk potongan.
+QualityBalanced,,標準,Balanced,标准,標準,표준,Equilibrada,متوازنة,Seimbang
+QualityBalancedDescription,,格子の長辺を512セルまでに抑えた設定です,Limits the long side of the grid to 512 cells.,将网格长边限制在512格以内的设置。,將網格長邊限制在512格以內的設定。,격자의 긴 변을 512칸까지로 제한한 설정입니다.,Limita el lado largo de la cuadrícula a 512 celdas.,يحدّ الضلع الطويل للشبكة بـ 512 خلية.,Membatasi sisi panjang kisi hingga 512 sel.
+QualityHigh,,高品質,High,高质量,高品質,고품질,Alta,عالية,Tinggi
+QualityHighDescription,,格子の長辺を1024セルまでにした設定です,Limits the long side of the grid to 1024 cells.,将网格长边限制在1024格以内的设置。,將網格長邊限制在1024格以內的設定。,격자의 긴 변을 1024칸까지로 제한한 설정입니다.,Limita el lado largo de la cuadrícula a 1024 celdas.,يحدّ الضلع الطويل للشبكة بـ 1024 خلية.,Membatasi sisi panjang kisi hingga 1024 sel.
+QualityUltra,,最高品質,Ultra,最高质量,最高品質,최고 품질,Máxima,فائقة,Ultra
+QualityUltraDescription,,格子の長辺を2048セルまでにした設定です,Limits the long side of the grid to 2048 cells.,将网格长边限制在2048格以内的设置。,將網格長邊限制在2048格以內的設定。,격자의 긴 변을 2048칸까지로 제한한 설정입니다.,Limita el lado largo de la cuadrícula a 2048 celdas.,يحدّ الضلع الطويل للشبكة بـ 2048 خلية.,Membatasi sisi panjang kisi hingga 2048 sel.
+PaperColor,,色,Color,颜色,顏色,색,Color,اللون,Warna
+PaperColorDescription,,紙の色です。色の不透明度も反映されます,The color of the paper. The opacity of the color is also applied.,纸的颜色。颜色的不透明度也会生效。,紙的顏色。顏色的不透明度也會生效。,종이의 색입니다. 색의 불투명도도 반영됩니다.,Color del papel. También se aplica la opacidad del color.,لون الورق. تُطبَّق شفافية اللون أيضًا.,Warna kertas. Opasitas warna juga diterapkan.
+Opacity,,不透明度,Opacity,不透明度,不透明度,불투명도,Opacidad,التعتيم,Opasitas
+OpacityDescription,,紙の濃さです。0%にすると映像をそのまま通します,"The density of the paper. At 0%, the image passes through unchanged.",纸的浓度。设为0%时直接输出原画面。,紙的濃度。設為0%時直接輸出原畫面。,종이의 진하기입니다. 0%로 하면 영상을 그대로 통과시킵니다.,Densidad del papel. Con 0% la imagen pasa sin cambios.,كثافة الورق. عند 0% تمرر الصورة كما هي.,"Kepekatan kertas. Pada 0%, gambar diteruskan apa adanya."
+TagOutline,,縁取り,Outline,描边,描邊,테두리,Contorno,تحديد,Garis tepi
+TagScissors,,ハサミ,Scissors,剪刀,剪刀,가위,Tijeras,مقص,Gunting
+TagPolygon,,多角形,Polygon,多边形,多邊形,다각형,Polígono,مضلع,Poligon
 UpdateAvailableMessage,,新しいバージョン {0} が公開されています。,A new version {0} is available.,已发布新版本 {0}。,已發布新版本 {0}。,새 버전 {0}이(가) 공개되었습니다.,La nueva versión {0} está disponible.,الإصدار الجديد {0} متاح الآن.,Versi baru {0} telah tersedia.
