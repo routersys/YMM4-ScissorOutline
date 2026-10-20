@@ -8,6 +8,7 @@
   </Folder>
   <Project Path="ScissorOutline/ScissorOutline.csproj" />
   <Project Path="ScissorOutline.Tests/ScissorOutline.Tests.csproj" />
+  <Project Path="ScissorOutline.Harness/ScissorOutline.Harness.csproj" />
   <Project Path="YukkuriMovieMaker.Generator/YukkuriMovieMaker.Generator/YukkuriMovieMaker.Generator.csproj" />
   <Project Path="YukkuriMovieMaker.Generator/YukkuriMovieMaker.Generator.Build/YukkuriMovieMaker.Generator.Build.csproj">
     <BuildType Solution="*|*" Project="Debug" />
