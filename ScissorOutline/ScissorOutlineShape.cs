@@ -11,6 +11,7 @@ internal enum ScissorOutlineShapeChange
 internal sealed class ScissorOutlineShape
 {
     private readonly DiscDilation _dilation = new();
+    private readonly ThicknessDilation _thickness = new();
     private readonly ContourTracer _tracer = new();
     private readonly PolygonSimplifier _simplifier = new();
     private readonly ContourLoops _traced = new();
@@ -23,7 +24,7 @@ internal sealed class ScissorOutlineShape
     private bool _hasCells;
     private bool _hasSubject;
     private bool _hasTraced;
-    private int _tracedRadius;
+    private TraceKey _traceKey;
     private ShapeKey _shapeKey;
     private bool _hasShape;
     private Vector2[] _vertices = new Vector2[256];
@@ -80,7 +81,11 @@ internal sealed class ScissorOutlineShape
         var randomized = plan.Tremor > 0.0 || plan.EpsilonSpread > 0.0 || plan.Distance > 0.0;
         var seed = randomized ? parameters.Seed : 0;
         var frame = randomized ? parameters.Frame : 0;
-        var shapeKey = new ShapeKey(cellKey, plan.RadiusSquaredCells, plan.Epsilon, plan.EpsilonSpread, plan.Tremor, plan.Distance, seed, frame, parameters.FillHoles, originX, originY);
+        var uneven = plan.ThicknessSpread > 0.0;
+        var traceKey = uneven
+            ? new TraceKey(plan.RadiusSquaredCells, plan.Radius, plan.ThicknessSpread, plan.SpreadWavelength, plan.SpreadChange, parameters.Seed, plan.SpreadChange > 0.0 ? parameters.Frame : 0)
+            : new TraceKey(plan.RadiusSquaredCells, 0.0, 0.0, 0.0, 0.0, 0, 0);
+        var shapeKey = new ShapeKey(cellKey, traceKey, plan.Epsilon, plan.EpsilonSpread, plan.Tremor, plan.Distance, seed, frame, parameters.FillHoles, originX, originY);
         if (!cellsChanged && _hasShape && shapeKey == _shapeKey)
             return ScissorOutlineShapeChange.Unchanged;
 
@@ -93,13 +98,16 @@ internal sealed class ScissorOutlineShape
             return ScissorOutlineShapeChange.Rebuilt;
         }
 
-        if (!_hasTraced || _tracedRadius != plan.RadiusSquaredCells)
+        if (!_hasTraced || _traceKey != traceKey)
         {
             if (_inside.Length < size)
                 _inside = new ulong[size];
-            _dilation.Dilate(_cells.AsSpan(0, size), plan.GridWidth, plan.GridHeight, plan.RadiusSquaredCells, _inside.AsSpan(0, size));
+            if (uneven)
+                _thickness.Dilate(_cells.AsSpan(0, size), plan.GridWidth, plan.GridHeight, plan, ScissorOutlineJitter.Variation(traceKey.Seed, 0), ScissorOutlineJitter.Variation(traceKey.Seed, traceKey.Frame), _inside.AsSpan(0, size));
+            else
+                _dilation.Dilate(_cells.AsSpan(0, size), plan.GridWidth, plan.GridHeight, plan.RadiusSquaredCells, _inside.AsSpan(0, size));
             _tracer.Trace(_inside.AsSpan(0, size), plan.GridWidth, plan.GridHeight, _traced);
-            _tracedRadius = plan.RadiusSquaredCells;
+            _traceKey = traceKey;
             _hasTraced = true;
         }
 
@@ -176,5 +184,7 @@ internal sealed class ScissorOutlineShape
 
     private readonly record struct CellKey(int Width, int Height, int Cell);
 
-    private readonly record struct ShapeKey(CellKey Cells, int RadiusSquaredCells, double Epsilon, double EpsilonSpread, double Tremor, double Distance, int Seed, int Frame, bool FillHoles, float OriginX, float OriginY);
+    private readonly record struct TraceKey(int RadiusSquaredCells, double Radius, double Spread, double Wavelength, double Change, int Seed, int Frame);
+
+    private readonly record struct ShapeKey(CellKey Cells, TraceKey Trace, double Epsilon, double EpsilonSpread, double Tremor, double Distance, int Seed, int Frame, bool FillHoles, float OriginX, float OriginY);
 }
