@@ -12,6 +12,7 @@ internal sealed class ScissorOutlineShape
 {
     private const double MiterLimit = 4.0;
     private const double MinimumEdgeRatio = 0.25;
+    private const double MaximumExtraRatio = 0.5;
 
     private readonly DiscDilation _dilation = new();
     private readonly ThicknessDilation _thickness = new();
@@ -169,11 +170,12 @@ internal sealed class ScissorOutlineShape
             var nextX = (points[next * 2] - padding) * cell;
             var nextY = (points[next * 2 + 1] - padding) * cell;
             var length = Math.Sqrt((nextX - x) * (nextX - x) + (nextY - y) * (nextY - y));
-            var shift = shifts[index] * cell;
+            var extra = 0.0;
             if (plan.Tremor > 0.0)
-                shift += plan.Tremor * ScissorOutlineJitter.GetShiftUnit(points[index * 2], points[index * 2 + 1], points[next * 2], points[next * 2 + 1], variation);
+                extra += plan.Tremor * ScissorOutlineJitter.GetShiftUnit(points[index * 2], points[index * 2 + 1], points[next * 2], points[next * 2 + 1], variation);
             if (plan.Distance > 0.0)
-                shift += plan.Distance * 0.5 * (1.0 + ScissorOutlineJitter.GetWave((x + nextX) / 2.0, (y + nextY) / 2.0, plan.Wavelength, variation));
+                extra += plan.Distance * 0.5 * (1.0 + ScissorOutlineJitter.GetWave((x + nextX) / 2.0, (y + nextY) / 2.0, plan.Wavelength, variation));
+            var shift = shifts[index] * cell + Math.Min(extra, MaximumExtraRatio * length);
             corners[k] = new Corner(x, y, length, length > 0.0 ? (nextY - y) / length : 0.0, length > 0.0 ? (x - nextX) / length : 0.0, shift);
         }
 
