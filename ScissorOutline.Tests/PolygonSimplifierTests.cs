@@ -196,4 +196,106 @@ public sealed class PolygonSimplifierTests
         Assert.Equal((10, 10), Points(result, 0)[0]);
         Assert.Equal((0, 0), Points(result, 1)[0]);
     }
+
+    static double EdgeLengthSpread(ContourLoops loops)
+    {
+        var points = Points(loops, 0);
+        var lengths = points.Select((point, i) =>
+        {
+            var next = points[(i + 1) % points.Length];
+            return Math.Sqrt(Math.Pow(point.X - next.X, 2) + Math.Pow(point.Y - next.Y, 2));
+        }).ToArray();
+        var mean = lengths.Average();
+        return Math.Sqrt(lengths.Select(length => (length - mean) * (length - mean)).Average()) / mean;
+    }
+
+    static ContourLoops Simplify(ContourLoops source, double epsilon, double spread, uint variation)
+    {
+        var result = new ContourLoops();
+        new PolygonSimplifier().Simplify(source, 0, epsilon, result, spread, variation);
+        return result;
+    }
+
+    [Theory]
+    [InlineData(0.5)]
+    [InlineData(1.0)]
+    public void EveryDroppedVertexLiesWithinTheLargestToleranceOfTheEdgeThatReplacesIt(double spread)
+    {
+        var source = TraceDisc(24.0, 1.5);
+        var original = Points(source, 0);
+        var limit = 2.0 * (1.0 + ScissorOutlineSettings.IrregularEpsilonGrowth * spread);
+
+        foreach (var variation in new[] { 1u, 2u, 3u, 4u })
+        {
+            var kept = Points(Simplify(source, 2.0, spread, variation), 0);
+            var indices = kept.Select(p => Array.IndexOf(original, p)).ToArray();
+            Assert.DoesNotContain(-1, indices);
+            for (var k = 0; k < indices.Length; k++)
+            {
+                var from = indices[k];
+                var to = indices[(k + 1) % indices.Length];
+                var span = (to - from + original.Length) % original.Length;
+                for (var step = 1; step < span; step++)
+                    Assert.True(DistanceToLine(original[from], original[to], original[(from + step) % original.Length]) <= limit + 1e-9);
+            }
+        }
+    }
+
+    [Fact]
+    public void WithoutSpreadTheVariationHasNoEffect()
+    {
+        var source = TraceDisc(24.0, 1.5);
+
+        var first = Simplify(source, 3.0, 0.0, 1u);
+        var second = Simplify(source, 3.0, 0.0, 2u);
+
+        Assert.Equal(Points(first, 0), Points(second, 0));
+        Assert.Equal(Points(first, 0), Points(Simplify(source, 3.0, 0.0, 0u), 0));
+    }
+
+    [Theory]
+    [InlineData(0.5)]
+    [InlineData(1.0)]
+    public void ASpreadMakesTheEdgeLengthsMoreUneven(double spread)
+    {
+        var source = TraceDisc(24.0, 1.5);
+        var even = EdgeLengthSpread(Simplify(source, 3.0, 0.0, 1u));
+
+        foreach (var variation in new[] { 1u, 2u, 3u })
+            Assert.True(EdgeLengthSpread(Simplify(source, 3.0, spread, variation)) > even, $"{spread} {variation}");
+    }
+
+    [Fact]
+    public void AFullSpreadMakesTheEdgesClearlyUneven()
+    {
+        var source = TraceDisc(24.0, 1.5);
+
+        foreach (var variation in new[] { 1u, 2u, 3u })
+            Assert.True(EdgeLengthSpread(Simplify(source, 3.0, 1.0, variation)) > 0.5);
+    }
+
+    [Fact]
+    public void AnotherVariationGivesOtherVerticesAndTheSameVariationTheSameOnes()
+    {
+        var source = TraceDisc(24.0, 1.5);
+
+        var first = Points(Simplify(source, 3.0, 1.0, 1u), 0);
+        var again = Points(Simplify(source, 3.0, 1.0, 1u), 0);
+        var other = Points(Simplify(source, 3.0, 1.0, 2u), 0);
+
+        Assert.Equal(first, again);
+        Assert.NotEqual(first, other);
+    }
+
+    [Fact]
+    public void TheRandomSplitStillKeepsOnlyOriginalVerticesAndTheTopmostStart()
+    {
+        var source = TraceDisc(24.0, 1.5);
+
+        var kept = Points(Simplify(source, 3.0, 1.0, 5u), 0);
+
+        Assert.Subset(Points(source, 0).ToHashSet(), kept.ToHashSet());
+        Assert.Equal(Points(source, 0).OrderBy(p => p.Y).ThenBy(p => p.X).First(), kept[0]);
+        Assert.True(kept.Length >= 3);
+    }
 }
