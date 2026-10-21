@@ -68,7 +68,9 @@ internal sealed class ScissorOutlineEffectProcessor(IGraphicsDevicesAndContext d
             Math.Clamp(_item.Tremor.GetValue(frame, length, fps) / 100.0, 0.0, 1.0),
             _item.Seed,
             _item.FillHoles,
-            _item.Quality);
+            _item.Quality,
+            Math.Clamp(_item.Irregularity.GetValue(frame, length, fps) / 100.0, 0.0, 1.0),
+            (int)Math.Floor(frame / (double)Math.Max(_item.HoldFrames, 1)));
         var change = ReadAndBuild(dc, bounds, (int)Math.Ceiling(boundsWidth), (int)Math.Ceiling(boundsHeight), parameters);
         if (_shape.LoopCount == 0)
             return PassThrough(effectDescription);

@@ -140,8 +140,8 @@ public sealed class ScissorOutlineEffectProcessorTests
         using var source = new SourceImage(context, Width, Height, Disc);
         var centers = SubjectCenters(Disc, Width, Height);
         var effect = Cut(12d);
-        var plan = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(12d, 0.5d, 0.3d, 0, true, ScissorOutlineQuality.High), Width, Height);
-        var limit = 12d + 2 * plan.Epsilon + 2 * plan.Tremor + 3 * plan.Cell + 2d;
+        var plan = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(12d, 0.5d, 0.3d, 0, true, ScissorOutlineQuality.High, 0.5d), Width, Height);
+        var limit = 12d + 2 * plan.Epsilon + 2 * (plan.Tremor + plan.Distance) + 3 * plan.Cell + 2d;
 
         var rendering = RenderFresh(context, effect, source, 0);
 
@@ -261,7 +261,9 @@ public sealed class ScissorOutlineEffectProcessorTests
     {
         { nameof(ScissorOutlineEffect.Thickness), effect => effect.Thickness.Values[0].Value = 30d, true },
         { nameof(ScissorOutlineEffect.Coarseness), effect => effect.Coarseness.Values[0].Value = 100d, true },
+        { nameof(ScissorOutlineEffect.Irregularity), effect => effect.Irregularity.Values[0].Value = 100d, true },
         { nameof(ScissorOutlineEffect.Tremor), effect => effect.Tremor.Values[0].Value = 100d, true },
+        { nameof(ScissorOutlineEffect.HoldFrames), effect => effect.HoldFrames = 1, true },
         { nameof(ScissorOutlineEffect.Seed), effect => effect.Seed = 7, true },
         { nameof(ScissorOutlineEffect.PaperColor), effect => effect.PaperColor = Colors.Red, true },
         { nameof(ScissorOutlineEffect.Opacity), effect => effect.Opacity.Values[0].Value = 40d, true },
