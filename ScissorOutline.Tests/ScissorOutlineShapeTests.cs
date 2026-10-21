@@ -290,6 +290,146 @@ public sealed class ScissorOutlineShapeTests
         Assert.True(reused.Starts.SequenceEqual(fresh.Starts));
     }
 
+    public static readonly TheoryData<double, double, double, double, double, ScissorOutlineQuality> Uneven = new()
+    {
+        { 6, 12, 40, 0.5, 0, ScissorOutlineQuality.High },
+        { 12, 30, 100, 1.0, 0.3, ScissorOutlineQuality.Balanced },
+        { 24, 60, 200, 0.0, 0.5, ScissorOutlineQuality.High },
+        { 24, 24, 60, 0.5, 1.0, ScissorOutlineQuality.Ultra },
+        { 1, 8, 20, 1.0, 0.5, ScissorOutlineQuality.High },
+        { 40, 100, 400, 0.7, 0.5, ScissorOutlineQuality.Balanced },
+    };
+
+    static ScissorOutlineParameters UnevenParameters(double thickness, double spread, double wavelength, double change, double tremor, ScissorOutlineQuality quality = ScissorOutlineQuality.High, int frame = 0, int seed = 5, double irregularity = 0.0)
+        => new(thickness, 0.5, tremor, seed, true, quality, irregularity, frame, spread, wavelength, change);
+
+    [Theory]
+    [MemberData(nameof(Uneven))]
+    public void TheCutNeverComesCloserThanTheThicknessWhateverTheSpread(double thickness, double spread, double wavelength, double change, double tremor, ScissorOutlineQuality quality)
+    {
+        foreach (var (name, alpha) in Subjects())
+        {
+            foreach (var frame in new[] { 0, 1, 7 })
+            {
+                var shape = Build(alpha, UnevenParameters(thickness, spread, wavelength, change, tremor, quality, frame, irregularity: 0.5));
+
+                foreach (var (x, y) in Silhouettes.Centers(alpha, Width, Height))
+                {
+                    Assert.True(PolygonGeometry.DistanceToBoundary(shape, x, y) >= thickness - 0.01, $"{name} frame {frame} ({x}, {y})");
+                    Assert.NotEqual(0, PolygonGeometry.Winding(shape, x, y));
+                }
+            }
+        }
+    }
+
+    [Fact]
+    public void TheSpreadMakesSomePlacesThickAndOthersThin()
+    {
+        var alpha = Silhouettes.Disc(Width, Height, 100, 80, 20);
+        var centers = Silhouettes.Centers(alpha, Width, Height).ToArray();
+
+        double Range(double spread)
+        {
+            var shape = Build(alpha, UnevenParameters(10, spread, 50, 0.5, 0));
+            var distances = Enumerable.Range(0, shape.VertexCount).Select(i => PolygonGeometry.DistanceToNearest(centers, shape.Vertices[i].X, shape.Vertices[i].Y)).ToArray();
+            return distances.Max() - distances.Min();
+        }
+
+        Assert.True(Range(60) > Range(0) + 20);
+    }
+
+    [Fact]
+    public void WithoutSpreadTheWavelengthAndTheChangeHaveNoEffect()
+    {
+        var alpha = Silhouettes.Blobs(Width, Height, 3, 7);
+        var plain = Build(alpha, UnevenParameters(20, 0, 60, 0.0, 0.5));
+        var other = Build(alpha, UnevenParameters(20, 0, 300, 1.0, 0.5));
+
+        Assert.True(plain.Vertices.SequenceEqual(other.Vertices));
+        Assert.True(plain.Starts.SequenceEqual(other.Starts));
+    }
+
+    [Fact]
+    public void TheChangeDecidesWhetherTheFrameChangesTheShape()
+    {
+        var alpha = Silhouettes.Blobs(Width, Height, 3, 7);
+
+        var held = Build(alpha, UnevenParameters(20, 40, 80, 0.0, 0.0, frame: 0));
+        var heldLater = Build(alpha, UnevenParameters(20, 40, 80, 0.0, 0.0, frame: 9));
+        var changing = Build(alpha, UnevenParameters(20, 40, 80, 1.0, 0.0, frame: 0));
+        var changingLater = Build(alpha, UnevenParameters(20, 40, 80, 1.0, 0.0, frame: 9));
+
+        Assert.True(held.Vertices.SequenceEqual(heldLater.Vertices));
+        Assert.False(changing.Vertices.SequenceEqual(changingLater.Vertices));
+    }
+
+    [Fact]
+    public void TheSeedChangesTheThicknessPattern()
+    {
+        var alpha = Silhouettes.Blobs(Width, Height, 3, 7);
+
+        var first = Build(alpha, UnevenParameters(20, 40, 80, 0.0, 0.0, seed: 1));
+        var second = Build(alpha, UnevenParameters(20, 40, 80, 0.0, 0.0, seed: 2));
+
+        Assert.False(first.Vertices.SequenceEqual(second.Vertices));
+    }
+
+    [Fact]
+    public void ARepeatedBuildWithASpreadIsReportedAsUnchangedUnlessTheFrameMatters()
+    {
+        var alpha = Silhouettes.Disc(Width, Height, 100, 80, 30);
+        var shape = new ScissorOutlineShape();
+        var held = UnevenParameters(20, 40, 80, 0.0, 0.0, frame: 0);
+        var changing = held with { SpreadChange = 0.5 };
+
+        Assert.Equal(ScissorOutlineShapeChange.Rebuilt, shape.Build(alpha, Width, Height, Width, 0f, 0f, held));
+        Assert.Equal(ScissorOutlineShapeChange.Unchanged, shape.Build(alpha, Width, Height, Width, 0f, 0f, held with { Frame = 4 }));
+        Assert.Equal(ScissorOutlineShapeChange.Rebuilt, shape.Build(alpha, Width, Height, Width, 0f, 0f, changing));
+        Assert.Equal(ScissorOutlineShapeChange.Unchanged, shape.Build(alpha, Width, Height, Width, 0f, 0f, changing));
+        Assert.Equal(ScissorOutlineShapeChange.Rebuilt, shape.Build(alpha, Width, Height, Width, 0f, 0f, changing with { Frame = 1 }));
+        Assert.Equal(ScissorOutlineShapeChange.Rebuilt, shape.Build(alpha, Width, Height, Width, 0f, 0f, changing with { Frame = 1, ThicknessSpread = 41 }));
+        Assert.Equal(ScissorOutlineShapeChange.Rebuilt, shape.Build(alpha, Width, Height, Width, 0f, 0f, changing with { Frame = 1, ThicknessSpread = 41, SpreadWavelength = 90 }));
+        Assert.Equal(ScissorOutlineShapeChange.Rebuilt, shape.Build(alpha, Width, Height, Width, 0f, 0f, changing with { Frame = 1, ThicknessSpread = 41, SpreadWavelength = 90, SpreadChange = 0.6 }));
+        Assert.Equal(ScissorOutlineShapeChange.Rebuilt, shape.Build(alpha, Width, Height, Width, 0f, 0f, changing with { ThicknessSpread = 0 }));
+    }
+
+    [Fact]
+    public void APooledImageGivesTheSameShapeAsTheFullImageWithASpread()
+    {
+        foreach (var (name, alpha) in Subjects())
+        {
+            var parameters = UnevenParameters(20, 30, 90, 0.5, 0.3, frame: 3);
+            var level = PoolLevel(parameters);
+            var pooled = Pool(alpha, level, out var pooledWidth, out var pooledHeight);
+
+            var full = Build(alpha, parameters);
+            var fromPooled = new ScissorOutlineShape();
+            fromPooled.BuildPooled(pooled, pooledWidth, pooledHeight, pooledWidth, level, Width, Height, 0f, 0f, parameters);
+
+            Assert.True(level > 0);
+            Assert.True(full.VertexCount > 0, name);
+            Assert.True(full.Vertices.SequenceEqual(fromPooled.Vertices), name);
+            Assert.True(full.Starts.SequenceEqual(fromPooled.Starts), name);
+        }
+    }
+
+    [Fact]
+    public void AReusedShapeWithASpreadBuildsLikeAFreshOneAfterTheInputChanges()
+    {
+        var first = Silhouettes.Blobs(Width, Height, 1, 8);
+        var second = Silhouettes.Blobs(Width, Height, 2, 5);
+        var parameters = UnevenParameters(16, 30, 90, 0.5, 0.5, frame: 2, seed: 7);
+        var reused = new ScissorOutlineShape();
+        reused.Build(first, Width, Height, Width, 0f, 0f, UnevenParameters(40, 100, 300, 1.0, 1.0));
+        reused.Build(first, Width, Height, Width, 0f, 0f, parameters);
+
+        reused.Build(second, Width, Height, Width, 0f, 0f, parameters);
+
+        var fresh = Build(second, parameters);
+        Assert.True(reused.Vertices.SequenceEqual(fresh.Vertices));
+        Assert.True(reused.Starts.SequenceEqual(fresh.Starts));
+    }
+
     [Fact]
     public void AnImageWithoutSubjectHasNoLoops()
     {
