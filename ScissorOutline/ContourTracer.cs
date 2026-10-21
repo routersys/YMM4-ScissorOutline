@@ -20,8 +20,14 @@ internal sealed class ContourTracer
         corners.Clear();
         MarkEdges(inside, width, height, stride, corners);
 
-        for (var start = 0; start < size; start++)
+        var start = 0;
+        while (true)
         {
+            var next = corners.Slice(start).IndexOfAnyExcept((byte)0);
+            if (next < 0)
+                break;
+
+            start += next;
             while (corners[start] != 0)
                 TraceLoop(corners, stride, start, loops);
         }
