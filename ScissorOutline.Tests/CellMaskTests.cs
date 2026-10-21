@@ -15,6 +15,64 @@ public sealed class CellMaskTests
         return Masks.ToBytes(bits, gridWidth, gridHeight);
     }
 
+    public static readonly TheoryData<int, int, int, int> Randoms = new()
+    {
+        { 1, 1, 1, 1 },
+        { 15, 9, 1, 2 },
+        { 16, 9, 2, 3 },
+        { 17, 11, 2, 4 },
+        { 31, 13, 1, 5 },
+        { 33, 21, 2, 6 },
+        { 130, 17, 1, 7 },
+        { 131, 18, 2, 8 },
+        { 200, 70, 4, 9 },
+        { 201, 71, 8, 10 },
+        { 300, 100, 16, 11 },
+        { 301, 99, 32, 12 },
+        { 257, 65, 64, 13 },
+    };
+
+    static ulong[] Scalar(byte[] alpha, int width, int height, int stride, int cell)
+    {
+        var gridWidth = (width + cell - 1) / cell + 2 * Padding;
+        var gridHeight = (height + cell - 1) / cell + 2 * Padding;
+        var wordsPerRow = BitGrid.WordsPerRow(gridWidth);
+        var bits = new ulong[wordsPerRow * gridHeight];
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                if (alpha[y * stride + x] > ScissorOutlineSettings.AlphaThreshold)
+                    BitGrid.Set(bits, wordsPerRow, x / cell + Padding, y / cell + Padding);
+            }
+        }
+
+        return bits;
+    }
+
+    [Theory]
+    [MemberData(nameof(Randoms))]
+    public void TheMaskMatchesAPerPixelReferenceForRandomImages(int width, int height, int cell, int seed)
+    {
+        var stride = width + 5;
+        var alpha = new byte[stride * height];
+        var state = (uint)seed * 2654435761u + 5u;
+        for (var i = 0; i < alpha.Length; i++)
+        {
+            state = state * 1664525u + 1013904223u;
+            var roll = (state >> 8) % 100;
+            alpha[i] = roll < 6 ? (byte)((state >> 16) % 256) : roll < 8 ? (byte)(ScissorOutlineSettings.AlphaThreshold + (state >> 16) % 3) : (byte)0;
+        }
+
+        var gridWidth = (width + cell - 1) / cell + 2 * Padding;
+        var gridHeight = (height + cell - 1) / cell + 2 * Padding;
+        var bits = new ulong[BitGrid.WordsPerRow(gridWidth) * gridHeight];
+
+        CellMask.Build(alpha, width, height, stride, cell, gridWidth, bits);
+
+        Assert.Equal(Scalar(alpha, width, height, stride, cell), bits);
+    }
+
     [Fact]
     public void ACellIsASubjectWhenAnyPixelOfItsBlockIsVisible()
     {
