@@ -1,3 +1,6 @@
+using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
+
 namespace ScissorOutline;
 
 internal sealed class DiscDilation
@@ -84,7 +87,23 @@ internal sealed class DiscDilation
     {
         var wordShift = shift >> 6;
         var bitShift = shift & 63;
-        for (var i = bits.Length - 1; i >= wordShift; i--)
+        var i = bits.Length - 1;
+        if (Vector128.IsHardwareAccelerated)
+        {
+            ref var origin = ref MemoryMarshal.GetReference(bits);
+            for (i = bits.Length - 2; i >= wordShift + 1; i -= 2)
+            {
+                var current = Vector128.LoadUnsafe(ref origin, (nuint)(i - wordShift));
+                var shifted = bitShift == 0
+                    ? current
+                    : Vector128.ShiftLeft(current, bitShift) | Vector128.ShiftRightLogical(Vector128.LoadUnsafe(ref origin, (nuint)(i - wordShift - 1)), 64 - bitShift);
+                (Vector128.LoadUnsafe(ref origin, (nuint)i) | shifted).StoreUnsafe(ref origin, (nuint)i);
+            }
+
+            i++;
+        }
+
+        for (; i >= wordShift; i--)
         {
             var value = bits[i - wordShift] << bitShift;
             if (bitShift != 0 && i - wordShift - 1 >= 0)
@@ -97,7 +116,22 @@ internal sealed class DiscDilation
     {
         var wordShift = shift >> 6;
         var bitShift = shift & 63;
-        for (var i = 0; i < result.Length; i++)
+        var i = 0;
+        if (Vector128.IsHardwareAccelerated)
+        {
+            ref readonly var origin = ref MemoryMarshal.GetReference(bits);
+            ref var destination = ref MemoryMarshal.GetReference(result);
+            for (; i + 2 <= result.Length && i + wordShift + 2 < bits.Length; i += 2)
+            {
+                var current = Vector128.LoadUnsafe(in origin, (nuint)(i + wordShift));
+                var shifted = bitShift == 0
+                    ? current
+                    : Vector128.ShiftRightLogical(current, bitShift) | Vector128.ShiftLeft(Vector128.LoadUnsafe(in origin, (nuint)(i + wordShift + 1)), 64 - bitShift);
+                shifted.StoreUnsafe(ref destination, (nuint)i);
+            }
+        }
+
+        for (; i < result.Length; i++)
         {
             var from = i + wordShift;
             var value = from < bits.Length ? bits[from] >> bitShift : 0UL;
