@@ -10,4 +10,7 @@ internal readonly record struct ScissorOutlinePlan(
     double EpsilonSpread,
     double Tremor,
     double Distance,
-    double Wavelength);
+    double Wavelength,
+    double ThicknessSpread,
+    double SpreadWavelength,
+    double SpreadChange);

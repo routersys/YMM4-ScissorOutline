@@ -18,6 +18,14 @@ internal static class ScissorOutlineSettings
     public const double WavelengthPerThickness = 2.0;
     public const double MinimumWavelength = 16.0;
     public const double ThicknessContrast = 0.75;
+    public const double DefaultThicknessSpread = 24.0;
+    public const double MaximumThicknessSpread = 500.0;
+    public const double SliderMaximumThicknessSpread = 200.0;
+    public const double DefaultSpreadWavelength = 120.0;
+    public const double MinimumSpreadWavelength = 16.0;
+    public const double MaximumSpreadWavelength = 2000.0;
+    public const double SliderMaximumSpreadWavelength = 400.0;
+    public const double DefaultSpreadChange = 50.0;
     public const double CellsPerRadius = 8.0;
     public const double SlackCells = 1.5;
     public const int PaddingCells = 22;
@@ -58,9 +66,10 @@ internal static class ScissorOutlineSettings
         var tremor = TremorPerThickness * Math.Clamp(parameters.Tremor, 0.0, 1.0) * thickness;
         var irregularity = Math.Clamp(parameters.Irregularity, 0.0, 1.0);
         var distance = IrregularDistancePerThickness * irregularity * thickness;
+        var spread = Math.Clamp(parameters.ThicknessSpread, 0.0, MaximumThicknessSpread);
         var longSide = Math.Max(Math.Max(width, height), 1);
         var gridCell = CeilingPowerOfTwo((longSide + GetMaximumGridSide(parameters.Quality) - 1) / GetMaximumGridSide(parameters.Quality));
-        var radiusCell = FloorPowerOfTwo((thickness + requestedEpsilon + tremor + distance) / CellsPerRadius);
+        var radiusCell = FloorPowerOfTwo((thickness + requestedEpsilon + tremor + distance + spread) / CellsPerRadius);
         var cell = Math.Max(gridCell, radiusCell);
         var epsilon = Math.Max(requestedEpsilon, cell);
         var radius = thickness + epsilon + tremor + distance + SlackCells * cell;
@@ -75,6 +84,9 @@ internal static class ScissorOutlineSettings
             irregularity,
             tremor,
             distance,
-            Math.Max(MinimumWavelength, WavelengthPerThickness * thickness));
+            Math.Max(MinimumWavelength, WavelengthPerThickness * thickness),
+            spread,
+            Math.Clamp(parameters.SpreadWavelength, MinimumSpreadWavelength, MaximumSpreadWavelength),
+            Math.Clamp(parameters.SpreadChange, 0.0, 1.0));
     }
 }
