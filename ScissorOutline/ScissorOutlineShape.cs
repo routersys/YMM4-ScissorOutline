@@ -10,7 +10,7 @@ internal enum ScissorOutlineShapeChange
 
 internal sealed class ScissorOutlineShape
 {
-    private const double MiterLimit = 4.0;
+    private const double MiterLimit = 2.5;
     private const double MinimumEdgeRatio = 0.25;
     private const double MaximumExtraRatio = 0.5;
 
