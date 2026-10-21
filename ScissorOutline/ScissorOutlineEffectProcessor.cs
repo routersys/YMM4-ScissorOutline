@@ -2,8 +2,6 @@ using System.Numerics;
 using SharpGen.Runtime;
 using Vortice.Direct2D1;
 using Vortice.Direct2D1.Effects;
-using Vortice.DCommon;
-using Vortice.DXGI;
 using Vortice.Mathematics;
 using YukkuriMovieMaker.Commons;
 using YukkuriMovieMaker.Player.Video;
@@ -16,14 +14,11 @@ internal sealed class ScissorOutlineEffectProcessor(IGraphicsDevicesAndContext d
     private readonly IGraphicsDevicesAndContext _devices = devices;
     private readonly ScissorOutlineEffect _item = item;
     private readonly ScissorOutlineShape _shape = new();
+    private readonly AlphaReadback _readback = new(devices);
     private AffineTransform2D? _output;
     private Composite? _composite;
     private ID2D1Image? _compositeOutput;
     private ID2D1CommandList? _paper;
-    private ID2D1Bitmap1? _target;
-    private ID2D1Bitmap1? _staging;
-    private int _readbackWidth;
-    private int _readbackHeight;
     private PaperKey _paperKey;
     private bool _hasPaper;
     private Route _route;
@@ -71,7 +66,7 @@ internal sealed class ScissorOutlineEffectProcessor(IGraphicsDevicesAndContext d
             _item.Quality,
             Math.Clamp(_item.Irregularity.GetValue(frame, length, fps) / 100.0, 0.0, 1.0),
             (int)Math.Floor(frame / (double)Math.Max(_item.HoldFrames, 1)));
-        var change = ReadAndBuild(dc, bounds, (int)Math.Ceiling(boundsWidth), (int)Math.Ceiling(boundsHeight), parameters);
+        var change = ReadAndBuild(bounds, (int)Math.Ceiling(boundsWidth), (int)Math.Ceiling(boundsHeight), parameters);
         if (_shape.LoopCount == 0)
             return PassThrough(effectDescription);
 
@@ -99,44 +94,21 @@ internal sealed class ScissorOutlineEffectProcessor(IGraphicsDevicesAndContext d
         return effectDescription.DrawDescription;
     }
 
-    private unsafe ScissorOutlineShapeChange ReadAndBuild(ID2D1DeviceContext dc, Vortice.RawRectF bounds, int width, int height, in ScissorOutlineParameters parameters)
+    private ScissorOutlineShapeChange ReadAndBuild(Vortice.RawRectF bounds, int width, int height, in ScissorOutlineParameters parameters)
     {
-        EnsureReadback(dc, width, height);
-        dc.Target = _target;
-        dc.BeginDraw();
-        dc.Clear(new Color4(0f, 0f, 0f, 0f));
-        dc.DrawImage(input!, new Vector2(-bounds.Left, -bounds.Top), null, InterpolationMode.NearestNeighbor, CompositeMode.SourceCopy);
-        dc.EndDraw().CheckError();
-        dc.Target = null;
-        _staging!.CopyFromBitmap(_target!);
-        var mapped = _staging.Map(MapOptions.Read);
+        var cell = ScissorOutlineSettings.CreatePlan(parameters, width, height).Cell;
+        var level = Math.Min(BitOperations.Log2((uint)cell), AlphaReadback.MaximumLevel);
+        var values = _readback.Read(bounds, width, height, level, out var readWidth, out var readHeight, out var stride);
         try
         {
-            var stride = (int)mapped.Pitch;
-            var alpha = new ReadOnlySpan<byte>((void*)mapped.Bits, stride * height);
-            return _shape.Build(alpha, width, height, stride, bounds.Left, bounds.Top, parameters);
+            return level == 0
+                ? _shape.Build(values, width, height, stride, bounds.Left, bounds.Top, parameters)
+                : _shape.BuildPooled(values, readWidth, readHeight, stride, level, width, height, bounds.Left, bounds.Top, parameters);
         }
         finally
         {
-            _staging.Unmap();
+            _readback.Unmap();
         }
-    }
-
-    private void EnsureReadback(ID2D1DeviceContext dc, int width, int height)
-    {
-        if (_target is not null && _staging is not null && _readbackWidth == width && _readbackHeight == height)
-            return;
-
-        disposer.RemoveAndDispose(ref _target);
-        disposer.RemoveAndDispose(ref _staging);
-        var format = new PixelFormat(Format.A8_UNorm, Vortice.DCommon.AlphaMode.Straight);
-        var size = new SizeI(width, height);
-        _target = dc.CreateBitmap(size, new BitmapProperties1(format, dc.Dpi.Width, dc.Dpi.Height, BitmapOptions.Target));
-        _staging = dc.CreateBitmap(size, new BitmapProperties1(format, dc.Dpi.Width, dc.Dpi.Height, BitmapOptions.CpuRead | BitmapOptions.CannotDraw));
-        disposer.Collect(_target);
-        disposer.Collect(_staging);
-        _readbackWidth = width;
-        _readbackHeight = height;
     }
 
     private void RecordPaper(ID2D1DeviceContext dc, in PaperKey key)
@@ -179,6 +151,7 @@ internal sealed class ScissorOutlineEffectProcessor(IGraphicsDevicesAndContext d
 
     protected override ID2D1Image? CreateEffect(IGraphicsDevicesAndContext devices)
     {
+        disposer.Collect(_readback);
         var composite = new Composite(devices.DeviceContext) { InputCount = 2, Mode = CompositeMode.SourceOver };
         disposer.Collect(composite);
         var compositeOutput = composite.Output;
@@ -195,6 +168,7 @@ internal sealed class ScissorOutlineEffectProcessor(IGraphicsDevicesAndContext d
 
     protected override void setInput(ID2D1Image? input)
     {
+        _readback.SetInput(input);
         _composite?.SetInput(1, input, true);
         if (_route == Route.PassThrough)
             _output?.SetInput(0, input, true);
@@ -204,6 +178,7 @@ internal sealed class ScissorOutlineEffectProcessor(IGraphicsDevicesAndContext d
     {
         try
         {
+            _readback.SetInput(null);
             _composite?.SetInput(0, null, true);
             _composite?.SetInput(1, null, true);
             _output?.SetInput(0, null, true);
