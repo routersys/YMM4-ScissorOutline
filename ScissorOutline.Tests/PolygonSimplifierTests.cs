@@ -298,4 +298,28 @@ public sealed class PolygonSimplifierTests
         Assert.Equal(Points(source, 0).OrderBy(p => p.Y).ThenBy(p => p.X).First(), kept[0]);
         Assert.True(kept.Length >= 3);
     }
+
+    [Theory]
+    [InlineData(1.0, new[] { 1, 2, 3, 4, 5 })]
+    [InlineData(0.5, new[] { 2, 3, 4 })]
+    public void TheSplitIsChosenAtRandomAmongTheVerticesFarEnoughFromTheEdge(double spread, int[] candidates)
+    {
+        int[] points = [0, 0, 1, 3, 2, 5, 3, 6, 4, 5, 5, 3, 6, 0];
+
+        var picks = Enumerable.Range(0, 200).Select(variation => PolygonSimplifier.ChooseSplit(points, 7, 0, 6, 36.0, spread, (uint)variation)).ToArray();
+
+        Assert.All(picks, pick => Assert.Contains(pick, candidates));
+        Assert.Equal(candidates.Order(), picks.Distinct().Order());
+    }
+
+    [Fact]
+    public void ThePickedSplitIsTheSameForTheSameChainAndVariation()
+    {
+        int[] points = [0, 0, 1, 3, 2, 5, 3, 6, 4, 5, 5, 3, 6, 0];
+
+        var first = PolygonSimplifier.ChooseSplit(points, 7, 0, 6, 36.0, 1.0, 9u);
+        var second = PolygonSimplifier.ChooseSplit(points, 7, 0, 6, 36.0, 1.0, 9u);
+
+        Assert.Equal(first, second);
+    }
 }
