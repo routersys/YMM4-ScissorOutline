@@ -52,6 +52,52 @@ public sealed class DiscDilationTests
         Assert.Equal(Expected(mask, width, height, squaredRadius), Masks.ToBytes(result, width, height));
     }
 
+    public static readonly TheoryData<int, int, int, int, int> Large = new()
+    {
+        { 300, 200, 1, 6, 4900 },
+        { 257, 150, 2, 5, 16900 },
+        { 64, 64, 3, 3, 4900 },
+        { 130, 90, 4, 8, 1600 },
+        { 193, 40, 5, 4, 4096 },
+    };
+
+    [Theory]
+    [MemberData(nameof(Large))]
+    public void ALargeDiscCrossesWordBoundariesLikeAStampedDisc(int width, int height, int seed, int count, int squaredRadius)
+    {
+        var mask = new byte[width * height];
+        var expected = new byte[width * height];
+        var state = (uint)seed * 2654435761u + 3u;
+        var subjects = new List<(int X, int Y)> { (0, 0), (width - 1, height - 1), (Math.Min(63, width - 1), height / 2), (Math.Min(64, width - 1), height / 3) };
+        for (var i = 0; i < count; i++)
+        {
+            state = state * 1664525u + 1013904223u;
+            var x = (int)((state >> 8) % (uint)width);
+            state = state * 1664525u + 1013904223u;
+            subjects.Add((x, (int)((state >> 8) % (uint)height)));
+        }
+
+        var radius = (int)Math.Floor(Math.Sqrt(squaredRadius));
+        foreach (var (x, y) in subjects)
+        {
+            mask[y * width + x] = 1;
+            for (var dy = -radius; dy <= radius; dy++)
+            {
+                var half = (int)Math.Floor(Math.Sqrt(squaredRadius - dy * dy));
+                if (y + dy < 0 || y + dy >= height)
+                    continue;
+                for (var dx = Math.Max(-half, -x); dx <= Math.Min(half, width - 1 - x); dx++)
+                    expected[(y + dy) * width + x + dx] = 1;
+            }
+        }
+
+        var result = new ulong[BitGrid.WordsPerRow(width) * height];
+
+        new DiscDilation().Dilate(Masks.ToBits(mask, width, height), width, height, squaredRadius, result);
+
+        Assert.Equal(expected, Masks.ToBytes(result, width, height));
+    }
+
     [Fact]
     public void ASingleCellBecomesAnIntegerDisc()
     {
