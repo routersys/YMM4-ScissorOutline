@@ -109,6 +109,29 @@ public sealed class AlphaReadbackTests
         }
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(2)]
+    public void ChangingOnlyTheWidthOrOnlyTheHeightReadsTheNewSize(int level)
+    {
+        using var devices = new GraphicsDevices();
+        using var context = devices.CreateContext();
+        using var readback = new AlphaReadback(context);
+
+        foreach (var (width, height) in new[] { (97, 61), (97, 90), (97, 41), (50, 41), (97, 41) })
+        {
+            byte AlphaAt(int x, int y) => AlphaOf(x, y, width, 60);
+            using var source = new SourceImage(context, width, height, (x, y) => new Bgra(AlphaAt(x, y), AlphaAt(x, y), AlphaAt(x, y), AlphaAt(x, y)));
+            readback.SetInput(source.Bitmap);
+            var expected = Expected(AlphaAt, width, height, level, out var expectedWidth, out var expectedHeight);
+
+            var actual = Read(readback, new Vortice.RawRectF(0, 0, width, height), width, height, level, out var pooledWidth, out var pooledHeight);
+
+            Assert.Equal((expectedWidth, expectedHeight), (pooledWidth, pooledHeight));
+            Assert.Equal(expected, actual);
+        }
+    }
+
     [Fact]
     public void ASinglePixelInEveryBlockSurvivesTheLargestLevel()
     {
