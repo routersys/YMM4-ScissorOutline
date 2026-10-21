@@ -134,7 +134,7 @@ internal sealed class ScissorOutlineShape
         VertexCount = _simplified.PointCount;
     }
 
-    private static Vector2 GetOutwardNormal(ReadOnlySpan<int> points, int previous, int index, int next)
+    internal static Vector2 GetOutwardNormal(ReadOnlySpan<int> points, int previous, int index, int next)
     {
         double incomingX = points[index * 2] - points[previous * 2];
         double incomingY = points[index * 2 + 1] - points[previous * 2 + 1];

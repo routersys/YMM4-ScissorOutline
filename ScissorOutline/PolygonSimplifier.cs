@@ -112,7 +112,7 @@ internal sealed class PolygonSimplifier
         _stack[depth++] = end;
     }
 
-    private static int ChooseSplit(ReadOnlySpan<int> points, int count, int begin, int end, double squaredDistance, double spread, uint variation)
+    internal static int ChooseSplit(ReadOnlySpan<int> points, int count, int begin, int end, double squaredDistance, double spread, uint variation)
     {
         var keep = 1.0 - ScissorOutlineSettings.IrregularEpsilonShrink * spread;
         var limit = squaredDistance * keep * keep;
