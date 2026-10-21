@@ -40,13 +40,33 @@ internal sealed class ScissorOutlineShape
     public ScissorOutlineShapeChange Build(ReadOnlySpan<byte> alpha, int width, int height, int stride, float originX, float originY, in ScissorOutlineParameters parameters)
     {
         var plan = ScissorOutlineSettings.CreatePlan(parameters, width, height);
-        var cellKey = new CellKey(width, height, plan.Cell);
+        var next = PrepareCells(plan);
+        CellMask.Build(alpha, width, height, stride, plan.Cell, plan.GridWidth, next);
+        return Update(plan, width, height, next, originX, originY, parameters);
+    }
+
+    public ScissorOutlineShapeChange BuildPooled(ReadOnlySpan<byte> pooled, int pooledWidth, int pooledHeight, int pooledStride, int level, int width, int height, float originX, float originY, in ScissorOutlineParameters parameters)
+    {
+        var plan = ScissorOutlineSettings.CreatePlan(parameters, width, height);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(1 << level, plan.Cell, nameof(level));
+        var next = PrepareCells(plan);
+        CellMask.Build(pooled, pooledWidth, pooledHeight, pooledStride, plan.Cell >> level, plan.GridWidth, next, 0);
+        return Update(plan, width, height, next, originX, originY, parameters);
+    }
+
+    private Span<ulong> PrepareCells(in ScissorOutlinePlan plan)
+    {
         var size = BitGrid.WordsPerRow(plan.GridWidth) * plan.GridHeight;
         if (_nextCells.Length < size)
             _nextCells = new ulong[size];
 
-        var next = _nextCells.AsSpan(0, size);
-        CellMask.Build(alpha, width, height, stride, plan.Cell, plan.GridWidth, next);
+        return _nextCells.AsSpan(0, size);
+    }
+
+    private ScissorOutlineShapeChange Update(in ScissorOutlinePlan plan, int width, int height, Span<ulong> next, float originX, float originY, in ScissorOutlineParameters parameters)
+    {
+        var cellKey = new CellKey(width, height, plan.Cell);
+        var size = next.Length;
         var cellsChanged = !_hasCells || cellKey != _cellKey || !next.SequenceEqual(_cells.AsSpan(0, size));
         if (cellsChanged)
         {
