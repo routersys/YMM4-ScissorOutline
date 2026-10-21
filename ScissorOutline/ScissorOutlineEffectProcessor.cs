@@ -65,7 +65,10 @@ internal sealed class ScissorOutlineEffectProcessor(IGraphicsDevicesAndContext d
             _item.FillHoles,
             _item.Quality,
             Math.Clamp(_item.Irregularity.GetValue(frame, length, fps) / 100.0, 0.0, 1.0),
-            (int)Math.Floor(frame / (double)Math.Max(_item.HoldFrames, 1)));
+            (int)Math.Floor(frame / (double)Math.Max(_item.HoldFrames, 1)),
+            Math.Clamp(_item.ThicknessSpread.GetValue(frame, length, fps), 0.0, ScissorOutlineSettings.MaximumThicknessSpread),
+            Math.Clamp(_item.SpreadWavelength.GetValue(frame, length, fps), ScissorOutlineSettings.MinimumSpreadWavelength, ScissorOutlineSettings.MaximumSpreadWavelength),
+            Math.Clamp(_item.SpreadChange.GetValue(frame, length, fps) / 100.0, 0.0, 1.0));
         var change = ReadAndBuild(bounds, (int)Math.Ceiling(boundsWidth), (int)Math.Ceiling(boundsHeight), parameters);
         if (_shape.LoopCount == 0)
             return PassThrough(effectDescription);
