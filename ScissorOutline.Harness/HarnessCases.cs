@@ -26,7 +26,7 @@ internal static class HarnessCases
         yield return ("color-red", Create(effect => effect.PaperColor = Colors.Red), [0]);
         yield return ("color-translucent", Create(effect => effect.PaperColor = Color.FromArgb(128, 255, 255, 255)), [0]);
         yield return ("opacity-50", Create(effect => effect.Opacity.Values[0].Value = 50), [0]);
-        yield return ("irregularity-0", Create(effect => effect.Irregularity.Values[0].Value = 0), [0]);
+        yield return ("irregularity-50", Create(effect => effect.Irregularity.Values[0].Value = 50), [0]);
         yield return ("irregularity-100", Create(effect => effect.Irregularity.Values[0].Value = 100), [0]);
         yield return ("irregularity-animated-frames", Create(effect => effect.Irregularity.CopyFrom(Linear(0d, 100d))), [0, 100, 200, 299]);
         yield return ("hold-frames-3-frames", Create(), [0, 2, 3, 5, 6]);
@@ -47,8 +47,8 @@ internal static class HarnessCases
         yield return ("opacity-100-to-50", () => Create(), effect => effect.Opacity.Values[0].Value = 50, 0);
         yield return ("opacity-100-to-0", () => Create(), effect => effect.Opacity.Values[0].Value = 0, 0);
         yield return ("opacity-0-to-100", () => Create(effect => effect.Opacity.Values[0].Value = 0), effect => effect.Opacity.Values[0].Value = 100, 0);
-        yield return ("irregularity-50-to-0", () => Create(), effect => effect.Irregularity.Values[0].Value = 0, 0);
-        yield return ("irregularity-50-to-100", () => Create(), effect => effect.Irregularity.Values[0].Value = 100, 0);
+        yield return ("irregularity-0-to-50", () => Create(), effect => effect.Irregularity.Values[0].Value = 50, 0);
+        yield return ("irregularity-0-to-100", () => Create(), effect => effect.Irregularity.Values[0].Value = 100, 0);
         yield return ("hold-frames-3-to-1", () => Create(), effect => effect.HoldFrames = 1, 7);
         yield return ("hold-frames-3-to-6", () => Create(), effect => effect.HoldFrames = 6, 7);
     }
