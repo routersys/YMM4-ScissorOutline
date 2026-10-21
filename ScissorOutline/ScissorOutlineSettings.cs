@@ -6,7 +6,7 @@ internal static class ScissorOutlineSettings
     public const double SliderMaximumThickness = 200.0;
     public const double DefaultThickness = 24.0;
     public const double DefaultCoarseness = 50.0;
-    public const double DefaultTremor = 30.0;
+    public const double DefaultTremor = 50.0;
     public const double DefaultOpacity = 100.0;
     public const double EpsilonPerThickness = 1.0;
     public const double TremorPerThickness = 1.0;

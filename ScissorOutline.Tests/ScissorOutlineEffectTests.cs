@@ -22,7 +22,7 @@ public sealed class ScissorOutlineEffectTests
     [InlineData(nameof(ScissorOutlineEffect.Thickness), 24d, 0d, 500d)]
     [InlineData(nameof(ScissorOutlineEffect.Coarseness), 50d, 0d, 100d)]
     [InlineData(nameof(ScissorOutlineEffect.Irregularity), 50d, 0d, 100d)]
-    [InlineData(nameof(ScissorOutlineEffect.Tremor), 30d, 0d, 100d)]
+    [InlineData(nameof(ScissorOutlineEffect.Tremor), 50d, 0d, 100d)]
     [InlineData(nameof(ScissorOutlineEffect.Opacity), 100d, 0d, 100d)]
     public void AnimatedParametersStartFromTheirDefaultsWithinTheirRange(string name, double defaultValue, double minimum, double maximum)
     {
