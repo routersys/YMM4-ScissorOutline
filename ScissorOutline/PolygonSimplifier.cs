@@ -5,7 +5,7 @@ internal sealed class PolygonSimplifier
     private bool[] _keep = [];
     private int[] _stack = new int[64];
 
-    public bool Simplify(ContourLoops source, int loop, double epsilon, ContourLoops destination)
+    public bool Simplify(ContourLoops source, int loop, double epsilon, ContourLoops destination, double spread = 0.0, uint variation = 0u)
     {
         var start = source.Starts[loop];
         var count = source.Starts[loop + 1] - start;
@@ -21,9 +21,8 @@ internal sealed class PolygonSimplifier
         _keep[first] = true;
         _keep[second] = true;
 
-        var squaredEpsilon = epsilon * epsilon;
-        Reduce(points, count, first, second > first ? second : second + count, squaredEpsilon);
-        Reduce(points, count, second, first > second ? first : first + count, squaredEpsilon);
+        Reduce(points, count, first, second > first ? second : second + count, epsilon, spread, variation);
+        Reduce(points, count, second, first > second ? first : first + count, epsilon, spread, variation);
 
         var kept = 0;
         for (var offset = 0; offset < count; offset++)
@@ -78,7 +77,7 @@ internal sealed class PolygonSimplifier
         return best;
     }
 
-    private void Reduce(ReadOnlySpan<int> points, int count, int from, int to, double squaredEpsilon)
+    private void Reduce(ReadOnlySpan<int> points, int count, int from, int to, double epsilon, double spread, uint variation)
     {
         var depth = 0;
         Push(ref depth, from, to);
@@ -90,8 +89,14 @@ internal sealed class PolygonSimplifier
                 continue;
 
             var farthest = FindFarthestFromLine(points, count, begin, end, out var squaredDistance);
-            if (squaredDistance <= squaredEpsilon)
+            var tolerance = spread > 0.0
+                ? epsilon * ScissorOutlineJitter.GetToleranceFactor(points[(begin % count) * 2], points[(begin % count) * 2 + 1], points[(end % count) * 2], points[(end % count) * 2 + 1], variation, spread)
+                : epsilon;
+            if (squaredDistance <= tolerance * tolerance)
                 continue;
+
+            if (spread > 0.0)
+                farthest = ChooseSplit(points, count, begin, end, squaredDistance, spread, variation);
 
             _keep[farthest % count] = true;
             Push(ref depth, begin, farthest);
@@ -105,6 +110,47 @@ internal sealed class PolygonSimplifier
             Array.Resize(ref _stack, _stack.Length * 2);
         _stack[depth++] = begin;
         _stack[depth++] = end;
+    }
+
+    private static int ChooseSplit(ReadOnlySpan<int> points, int count, int begin, int end, double squaredDistance, double spread, uint variation)
+    {
+        var keep = 1.0 - ScissorOutlineSettings.IrregularEpsilonShrink * spread;
+        var limit = squaredDistance * keep * keep;
+        var candidates = 0;
+        for (var i = begin + 1; i < end; i++)
+        {
+            if (GetSquaredDeviation(points, count, begin, end, i) >= limit)
+                candidates++;
+        }
+
+        var unit = ScissorOutlineJitter.GetSplitUnit(points[(begin % count) * 2], points[(begin % count) * 2 + 1], points[(end % count) * 2], points[(end % count) * 2 + 1], variation);
+        var pick = Math.Min((int)(unit * candidates), candidates - 1);
+        for (var i = begin + 1; i < end; i++)
+        {
+            if (GetSquaredDeviation(points, count, begin, end, i) < limit)
+                continue;
+            if (pick == 0)
+                return i;
+            pick--;
+        }
+
+        return begin + 1;
+    }
+
+    private static double GetSquaredDeviation(ReadOnlySpan<int> points, int count, int begin, int end, int index)
+    {
+        double px = points[(begin % count) * 2];
+        double py = points[(begin % count) * 2 + 1];
+        var dx = points[(end % count) * 2] - px;
+        var dy = points[(end % count) * 2 + 1] - py;
+        var rx = points[(index % count) * 2] - px;
+        var ry = points[(index % count) * 2 + 1] - py;
+        var squaredLength = dx * dx + dy * dy;
+        if (squaredLength == 0.0)
+            return rx * rx + ry * ry;
+
+        var cross = dx * ry - dy * rx;
+        return cross * cross / squaredLength;
     }
 
     private static int FindFarthestFromLine(ReadOnlySpan<int> points, int count, int begin, int end, out double squaredDistance)

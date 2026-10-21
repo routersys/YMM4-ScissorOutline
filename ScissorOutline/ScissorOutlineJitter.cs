@@ -7,6 +7,7 @@ internal static class ScissorOutlineJitter
     private const double InverseSquareRootOfTwo = 0.70710678118654752;
     private const uint ToleranceSalt = 0x68E31DA4u;
     private const uint WaveSalt = 0xB5297A4Du;
+    private const uint SplitSalt = 0x2545F491u;
 
     public static uint Variation(int seed, int frame)
         => unchecked((uint)seed + (uint)frame * 0x9E3779B9u);
@@ -26,6 +27,9 @@ internal static class ScissorOutlineJitter
         return 1.0 - ScissorOutlineSettings.IrregularEpsilonShrink * spread
             + (ScissorOutlineSettings.IrregularEpsilonShrink + ScissorOutlineSettings.IrregularEpsilonGrowth) * spread * unit;
     }
+
+    public static double GetSplitUnit(int fromX, int fromY, int toX, int toY, uint variation)
+        => Unit(fromX, fromY, toX, toY, variation ^ SplitSalt);
 
     public static double GetWave(double x, double y, double wavelength, uint variation)
     {
