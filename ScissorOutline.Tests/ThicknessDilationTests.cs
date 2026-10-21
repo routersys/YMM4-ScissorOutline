@@ -36,6 +36,19 @@ public sealed class ThicknessDilationTests
     }
 
     [Fact]
+    public void ACellExactlyAtTheRadiusIsInsideLikeTheDiscDilation()
+    {
+        var plan = Plan(24.0, 0.0) with { Cell = 8, Radius = 32.0, RadiusSquaredCells = 16 };
+        var mask = Masks.Random(plan.GridWidth, plan.GridHeight, 7, 1);
+        var expected = new ulong[BitGrid.WordsPerRow(plan.GridWidth) * plan.GridHeight];
+        new DiscDilation().Dilate(Masks.ToBits(mask, plan.GridWidth, plan.GridHeight), plan.GridWidth, plan.GridHeight, plan.RadiusSquaredCells, expected);
+
+        var actual = Dilate(mask, plan);
+
+        Assert.Equal(Masks.ToBytes(expected, plan.GridWidth, plan.GridHeight), actual);
+    }
+
+    [Fact]
     public void EveryCellWithinTheMinimumRadiusIsInsideAndEveryCellBeyondTheMaximumIsOutside()
     {
         var plan = Plan(24.0, 40.0);
