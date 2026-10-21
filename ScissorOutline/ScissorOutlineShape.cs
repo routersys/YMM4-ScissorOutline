@@ -107,7 +107,7 @@ internal sealed class ScissorOutlineShape
             var y = (points[i * 2 + 1] - ScissorOutlineSettings.PaddingCells) * plan.Cell;
             var vertex = new Vector2(originX + x, originY + y);
             if (plan.Tremor > 0.0)
-                vertex += ScissorOutlineJitter.GetOffset(x, y, seed, plan.Tremor);
+                vertex += ScissorOutlineJitter.GetOffset(x, y, ScissorOutlineJitter.Variation(seed, 0), plan.Tremor);
             _vertices[i] = vertex;
         }
 
