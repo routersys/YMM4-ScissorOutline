@@ -48,7 +48,7 @@ public sealed class ScissorOutlineSettingsTests
     }
 
     [Fact]
-    public void TheRadiusAddsTheEpsilonTheTremorAndTheSlackToTheThickness()
+    public void TheRadiusAddsOnlyTheSlackToTheThickness()
     {
         var parameters = new ScissorOutlineParameters(40, 0.5, 0.4, 0, true, ScissorOutlineQuality.High);
 
@@ -57,12 +57,12 @@ public sealed class ScissorOutlineSettingsTests
         Assert.Equal(8, plan.Cell);
         Assert.Equal(20.0, plan.Epsilon);
         Assert.Equal(16.0, plan.Tremor);
-        Assert.Equal(88.0, plan.Radius);
-        Assert.Equal(121, plan.RadiusSquaredCells);
+        Assert.Equal(52.0, plan.Radius);
+        Assert.Equal(42, plan.RadiusSquaredCells);
     }
 
     [Fact]
-    public void TheIrregularityAddsTheDistanceToTheRadius()
+    public void TheIrregularityGivesTheDistanceWithoutWideningTheRadius()
     {
         var parameters = new ScissorOutlineParameters(40, 0.5, 0.4, 0, true, ScissorOutlineQuality.High, 0.5);
 
@@ -74,8 +74,8 @@ public sealed class ScissorOutlineSettingsTests
         Assert.Equal(16.0, plan.Tremor);
         Assert.Equal(20.0, plan.Distance);
         Assert.Equal(80.0, plan.Wavelength);
-        Assert.Equal(108.0, plan.Radius);
-        Assert.Equal(182, plan.RadiusSquaredCells);
+        Assert.Equal(52.0, plan.Radius);
+        Assert.Equal(42, plan.RadiusSquaredCells);
     }
 
     [Fact]
@@ -88,8 +88,8 @@ public sealed class ScissorOutlineSettingsTests
         Assert.Equal(16, plan.Cell);
         Assert.Equal(20.0, plan.Epsilon);
         Assert.Equal(16.0, plan.Tremor);
-        Assert.Equal(100.0, plan.Radius);
-        Assert.Equal(39, plan.RadiusSquaredCells);
+        Assert.Equal(64.0, plan.Radius);
+        Assert.Equal(16, plan.RadiusSquaredCells);
         Assert.Equal(100.0, plan.ThicknessSpread);
         Assert.Equal(200.0, plan.SpreadWavelength);
         Assert.Equal(0.25, plan.SpreadChange);
@@ -102,7 +102,7 @@ public sealed class ScissorOutlineSettingsTests
         var zero = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(40, 0.5, 0.4, 0, true, ScissorOutlineQuality.High, 0.0, 17), 1920, 1080);
 
         Assert.Equal(plain, zero);
-        Assert.Equal(88.0, plain.Radius);
+        Assert.Equal(52.0, plain.Radius);
         Assert.Equal(0.0, plain.EpsilonSpread);
         Assert.Equal(0.0, plain.Distance);
     }

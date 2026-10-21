@@ -72,7 +72,7 @@ internal static class ScissorOutlineSettings
         var radiusCell = FloorPowerOfTwo((thickness + requestedEpsilon + tremor + distance + spread) / CellsPerRadius);
         var cell = Math.Max(gridCell, radiusCell);
         var epsilon = Math.Max(requestedEpsilon, cell);
-        var radius = thickness + epsilon + tremor + distance + SlackCells * cell;
+        var radius = thickness + SlackCells * cell;
         var radiusCells = radius / cell;
         return new ScissorOutlinePlan(
             cell,
