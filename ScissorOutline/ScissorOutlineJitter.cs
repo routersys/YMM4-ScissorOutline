@@ -8,6 +8,7 @@ internal static class ScissorOutlineJitter
     private const uint ToleranceSalt = 0x68E31DA4u;
     private const uint WaveSalt = 0xB5297A4Du;
     private const uint SplitSalt = 0x2545F491u;
+    private const uint ThicknessSalt = 0x7F4A7C15u;
 
     public static uint Variation(int seed, int frame)
         => unchecked((uint)seed + (uint)frame * 0x9E3779B9u);
@@ -29,6 +30,10 @@ internal static class ScissorOutlineJitter
 
     public static double GetSplitUnit(int fromX, int fromY, int toX, int toY, uint variation)
         => Unit(fromX, fromY, toX, toY, variation ^ SplitSalt);
+
+    public static double GetThicknessLattice(int x, int y, uint variation) => Signed(x, y, variation ^ ThicknessSalt);
+
+    public static double Fade(double value) => value * value * (3.0 - 2.0 * value);
 
     public static double GetWave(double x, double y, double wavelength, uint variation)
     {
@@ -58,8 +63,6 @@ internal static class ScissorOutlineJitter
     }
 
     private static double Signed(int x, int y, uint variation) => Unit(x, y, 0, 0, variation) * 2.0 - 1.0;
-
-    private static double Fade(double value) => value * value * (3.0 - 2.0 * value);
 
     private static uint Mix(uint value)
     {

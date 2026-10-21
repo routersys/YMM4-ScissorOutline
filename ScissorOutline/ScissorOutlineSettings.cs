@@ -17,6 +17,7 @@ internal static class ScissorOutlineSettings
     public const double IrregularDistancePerThickness = 1.0;
     public const double WavelengthPerThickness = 2.0;
     public const double MinimumWavelength = 16.0;
+    public const double ThicknessContrast = 0.75;
     public const double CellsPerRadius = 8.0;
     public const double SlackCells = 1.5;
     public const int PaddingCells = 22;
