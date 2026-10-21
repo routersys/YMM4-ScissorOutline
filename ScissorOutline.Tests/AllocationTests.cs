@@ -51,6 +51,20 @@ public sealed class AllocationTests
         Assert.Equal(0, allocated);
     }
 
+    [Fact]
+    public void RebuildingAnIrregularShapeForEveryFrameAllocatesNothing()
+    {
+        var alpha = Silhouettes.Blobs(Width, Height, 3, 7);
+        var shape = new ScissorOutlineShape();
+        for (var warm = 0; warm < 64; warm++)
+            shape.Build(alpha, Width, Height, Width, 0f, 0f, new ScissorOutlineParameters(24, 0.5, 0.5, 0, true, ScissorOutlineQuality.High, 1.0, warm));
+        var frame = 64;
+
+        var allocated = Allocation.Of(() => shape.Build(alpha, Width, Height, Width, 0f, 0f, new ScissorOutlineParameters(24, 0.5, 0.5, 0, true, ScissorOutlineQuality.High, 1.0, frame++ % 64)));
+
+        Assert.Equal(0, allocated);
+    }
+
     static ScissorOutlineParameters Parameters(int step)
         => new(8 + step % 6 * 5, step % 5 / 4.0, step % 3 / 2.0, step % 4, step % 2 == 0, ScissorOutlineQuality.High);
 }
