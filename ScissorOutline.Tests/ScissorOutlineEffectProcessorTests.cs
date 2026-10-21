@@ -133,15 +133,15 @@ public sealed class ScissorOutlineEffectProcessorTests
     }
 
     [Fact]
-    public void ThePaperStaysWithinTheBoundOfTheEpsilonTheTremorAndTheCell()
+    public void ThePaperStaysWithinTheBoundOfTheEpsilonTheTremorTheSpreadAndTheCell()
     {
         using var devices = new GraphicsDevices();
         using var context = devices.CreateContext();
         using var source = new SourceImage(context, Width, Height, Disc);
         var centers = SubjectCenters(Disc, Width, Height);
         var effect = Cut(12d);
-        var plan = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(12d, 0.5d, 0.3d, 0, true, ScissorOutlineQuality.High, 0.5d), Width, Height);
-        var limit = 12d + 2 * plan.Epsilon + 2 * (plan.Tremor + plan.Distance) + 3 * plan.Cell + 2d;
+        var plan = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(12d, ScissorOutlineSettings.DefaultCoarseness / 100d, ScissorOutlineSettings.DefaultTremor / 100d, 0, true, ScissorOutlineQuality.High, ScissorOutlineSettings.DefaultIrregularity / 100d, 0, ScissorOutlineSettings.DefaultThicknessSpread, ScissorOutlineSettings.DefaultSpreadWavelength, ScissorOutlineSettings.DefaultSpreadChange / 100d), Width, Height);
+        var limit = 12d + 2 * plan.Epsilon + 2 * (plan.Tremor + plan.Distance) + plan.ThicknessSpread + 3 * plan.Cell + 2d;
 
         var rendering = RenderFresh(context, effect, source, 0);
 
@@ -260,6 +260,9 @@ public sealed class ScissorOutlineEffectProcessorTests
     public static readonly TheoryData<string, Action<ScissorOutlineEffect>, bool> Changes = new()
     {
         { nameof(ScissorOutlineEffect.Thickness), effect => effect.Thickness.Values[0].Value = 30d, true },
+        { nameof(ScissorOutlineEffect.ThicknessSpread), effect => effect.ThicknessSpread.Values[0].Value = 60d, true },
+        { nameof(ScissorOutlineEffect.SpreadWavelength), effect => effect.SpreadWavelength.Values[0].Value = 40d, true },
+        { nameof(ScissorOutlineEffect.SpreadChange), effect => effect.SpreadChange.Values[0].Value = 100d, true },
         { nameof(ScissorOutlineEffect.Coarseness), effect => effect.Coarseness.Values[0].Value = 100d, true },
         { nameof(ScissorOutlineEffect.Irregularity), effect => effect.Irregularity.Values[0].Value = 100d, true },
         { nameof(ScissorOutlineEffect.Tremor), effect => effect.Tremor.Values[0].Value = 100d, true },
