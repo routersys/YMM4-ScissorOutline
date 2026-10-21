@@ -62,6 +62,46 @@ public sealed class ScissorOutlineSettingsTests
     }
 
     [Fact]
+    public void TheIrregularityAddsTheLargestToleranceAndTheDistanceToTheRadius()
+    {
+        var parameters = new ScissorOutlineParameters(40, 0.5, 0.4, 0, true, ScissorOutlineQuality.High, 0.5);
+
+        var plan = ScissorOutlineSettings.CreatePlan(parameters, 1920, 1080);
+
+        Assert.Equal(8, plan.Cell);
+        Assert.Equal(10.0, plan.Epsilon);
+        Assert.Equal(15.0, plan.EpsilonLimit);
+        Assert.Equal(0.5, plan.EpsilonSpread);
+        Assert.Equal(4.0, plan.Tremor);
+        Assert.Equal(10.0, plan.Distance);
+        Assert.Equal(80.0, plan.Wavelength);
+        Assert.Equal(81.0, plan.Radius);
+        Assert.Equal(102, plan.RadiusSquaredCells);
+    }
+
+    [Fact]
+    public void WithoutIrregularityThePlanIsTheSameAsBefore()
+    {
+        var plain = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(40, 0.5, 0.4, 0, true, ScissorOutlineQuality.High), 1920, 1080);
+        var zero = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(40, 0.5, 0.4, 0, true, ScissorOutlineQuality.High, 0.0, 17), 1920, 1080);
+
+        Assert.Equal(plain, zero);
+        Assert.Equal(60.0, plain.Radius);
+        Assert.Equal(plain.Epsilon, plain.EpsilonLimit);
+        Assert.Equal(0.0, plain.Distance);
+    }
+
+    [Fact]
+    public void TheWavelengthHasAFloorAndGrowsWithTheThickness()
+    {
+        var thin = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(2, 0, 0, 0, true, ScissorOutlineQuality.High), 100, 100);
+        var thick = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(100, 0, 0, 0, true, ScissorOutlineQuality.High), 100, 100);
+
+        Assert.Equal(ScissorOutlineSettings.MinimumWavelength, thin.Wavelength);
+        Assert.Equal(200.0, thick.Wavelength);
+    }
+
+    [Fact]
     public void TheEpsilonIsNeverBelowOneCell()
     {
         var parameters = new ScissorOutlineParameters(200, 0, 0, 0, true, ScissorOutlineQuality.High);
@@ -83,9 +123,12 @@ public sealed class ScissorOutlineSettingsTests
                 {
                     foreach (var ratio in new[] { 0.0, 0.5, 1.0 })
                     {
-                        var plan = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(thickness, ratio, 1.0 - ratio, 0, true, quality), side, side);
+                        foreach (var irregularity in new[] { 0.0, 0.5, 1.0 })
+                        {
+                            var plan = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(thickness, ratio, 1.0 - ratio, 0, true, quality, irregularity), side, side);
 
-                        Assert.True(Math.Ceiling(plan.Radius / plan.Cell) + 2 <= ScissorOutlineSettings.PaddingCells);
+                            Assert.True(Math.Ceiling(plan.Radius / plan.Cell) + 2 <= ScissorOutlineSettings.PaddingCells);
+                        }
                     }
                 }
             }
@@ -107,10 +150,10 @@ public sealed class ScissorOutlineSettingsTests
     [Fact]
     public void ParametersOutsideTheirRangeAreClamped()
     {
-        var clamped = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(-5, -1, -1, 0, true, ScissorOutlineQuality.High), 100, 100);
+        var clamped = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(-5, -1, -1, 0, true, ScissorOutlineQuality.High, -3), 100, 100);
         var zero = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(0, 0, 0, 0, true, ScissorOutlineQuality.High), 100, 100);
-        var large = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(1e6, 5, 5, 0, true, ScissorOutlineQuality.High), 100, 100);
-        var maximum = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(ScissorOutlineSettings.MaximumThickness, 1, 1, 0, true, ScissorOutlineQuality.High), 100, 100);
+        var large = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(1e6, 5, 5, 0, true, ScissorOutlineQuality.High, 7), 100, 100);
+        var maximum = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(ScissorOutlineSettings.MaximumThickness, 1, 1, 0, true, ScissorOutlineQuality.High, 1), 100, 100);
 
         Assert.Equal(zero, clamped);
         Assert.Equal(maximum, large);
