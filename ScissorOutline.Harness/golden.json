@@ -9,7 +9,7 @@
       "frames": [
         0
       ],
-      "hash": "E5182BADAAB34FAC2C4DC1E029D8CA699CFEEE088C1AB349D11D5820EE2230F3"
+      "hash": "1D3CDA5FD2981E466347C9BC4893227338378D17883A2C501BD19D4367FE572D"
     },
     {
       "name": "thickness-animated-frames",
@@ -19,7 +19,7 @@
         200,
         299
       ],
-      "hash": "7E94539C89634710E295726C45A83812A90FA64EC1F48DF4A0438761DE1B25BC"
+      "hash": "6D7AC3E6A4B3499E96971EA3E04D5CE6990AB7C5E22DA6D09F970AB8D525C00E"
     },
     {
       "name": "tremor-animated-frames",
@@ -29,7 +29,7 @@
         200,
         299
       ],
-      "hash": "6AE85FD110A0681B64561946EFB627EF79F9FA8599419E65F52ABD557FD1813D"
+      "hash": "0D64344B03E24097BE969C3263D10421E2AF26B22C65943255E19B9DCB01F398"
     },
     {
       "name": "thickness-0",
@@ -43,56 +43,112 @@
       "frames": [
         0
       ],
-      "hash": "A34F6D951E4F751B05C6D0435E5B4070112104D2BFC108FF0929143383E25515"
+      "hash": "E0DBD05B2AC2DC520A4A77350B9E8C600EDD75E83202002BF7B2A8FD87506587"
     },
     {
       "name": "thickness-60",
       "frames": [
         0
       ],
-      "hash": "95009814E44C6A776279C5F12BDF2670039D02516288250E51B84B66FE7CDEA9"
+      "hash": "487C829BFC2587BD87549425A68F349C3A27EF49201CD8E6473B08937E8EDC1B"
     },
     {
       "name": "thickness-160",
       "frames": [
         0
       ],
-      "hash": "744D6609D963C26177619D6A476B4D15FA379A0C46C05A82BFB1E241D7B88DA6"
+      "hash": "B342805C685E1A0C44110883C87985FB460C0D909B39A1094E014D4FDF1AD79F"
+    },
+    {
+      "name": "spread-0",
+      "frames": [
+        0
+      ],
+      "hash": "E5182BADAAB34FAC2C4DC1E029D8CA699CFEEE088C1AB349D11D5820EE2230F3"
+    },
+    {
+      "name": "spread-60",
+      "frames": [
+        0
+      ],
+      "hash": "899736792AC59E1CB2A8ABC5AAA5F98F0812439A137491F69A3F4C216B98DC75"
+    },
+    {
+      "name": "spread-animated-frames",
+      "frames": [
+        0,
+        100,
+        200,
+        299
+      ],
+      "hash": "DC6E895A0BDFE491CB8C2FA2E1FC33B23346A96C7E68C2FC9E4D17CEECA449D2"
+    },
+    {
+      "name": "spread-wavelength-40",
+      "frames": [
+        0
+      ],
+      "hash": "F6240DEC26A0C8B891A029B2E31FE3145CF60EA199C400CDC1AC68C583CA0EB8"
+    },
+    {
+      "name": "spread-wavelength-400",
+      "frames": [
+        0
+      ],
+      "hash": "A487727B1358BE56E4B618070F3983294F8CD8DBD464ED73CFAC2E3976D89764"
+    },
+    {
+      "name": "spread-change-0-frames",
+      "frames": [
+        0,
+        3,
+        6
+      ],
+      "hash": "8B1840AFA9523C832400B489FD8744C88958DEC48D2B5B8704A6C633CECF3001"
+    },
+    {
+      "name": "spread-change-100-frames",
+      "frames": [
+        0,
+        3,
+        6
+      ],
+      "hash": "C0AAD16E4685A315A31CE5723B55E7C3D1FA073D1724D3B4789B625020134E51"
     },
     {
       "name": "coarseness-0",
       "frames": [
         0
       ],
-      "hash": "8DAA6637089BEEEA3CCBFB1BE1570AC545ABB679D6D7FA18990AC95B5ED13B74"
+      "hash": "DAAAEB0B6EDD77B97377714C582B796F529E2BDA5A57396643E40B1DC1917FF1"
     },
     {
       "name": "coarseness-100",
       "frames": [
         0
       ],
-      "hash": "2D41105C7BAFEF7E69A948DA6FF960CE93209E2BEADD1CE3DF32DA99F2BB894C"
+      "hash": "8F9C5F80AB40551B8DBBA5C93F21AA97B119EDF4D2B0204A05F189D967E4E30F"
     },
     {
       "name": "tremor-0",
       "frames": [
         0
       ],
-      "hash": "0044108D60ACD1C0B28EE80C843E6AA951A437E701E47F22DF19686B0D51C6BE"
+      "hash": "EC5F244D04A201194E99A730741102C5DC15336819B6D3D8C8490450C07246DE"
     },
     {
       "name": "tremor-100",
       "frames": [
         0
       ],
-      "hash": "71D6724208C714041B47C5BFF202F5558AB110EDF2C9AF6FA96041794127D08C"
+      "hash": "2AC099AF1FEF8550DF94ACF27F21CC87BBAC9CBE9E01F0367CD294959F5FA29E"
     },
     {
       "name": "seed-7",
       "frames": [
         0
       ],
-      "hash": "47BA7E3B324D239137B69B638E9A8D2E6BFAD4DF408A6E8DFDCB814E3A96BCC4"
+      "hash": "B9039D9B125754EE64807D5D73B144164C397EE99D4E65B6687B81926C89652B"
     },
     {
       "name": "quality-balanced-thickness-4",
@@ -113,35 +169,35 @@
       "frames": [
         0
       ],
-      "hash": "4CF7CE67198F9BACD819226FB68175D5690453BAAA093B43D1920592DBC159CA"
+      "hash": "54F747811DB55CA51CACCDC99C783B0C993E729F65310186BBCD0B85B93CFA4B"
     },
     {
       "name": "color-translucent",
       "frames": [
         0
       ],
-      "hash": "05F0B950E9EF2224A49C89083EA5CA811311230241D9DDC1FEDFB30E91DA5C51"
+      "hash": "059D25C69BB18B079C9819C98408348DBADEF32EBD6658B82BF04956C18A25D7"
     },
     {
       "name": "opacity-50",
       "frames": [
         0
       ],
-      "hash": "5B633D16C94EDC4B458CF39251C32BADD562186E910750D24DFE0B50F61BE787"
+      "hash": "423DBC36998CBF0F252F897414E2D786E7F6D8D99936C5A1B656AC81EC05576C"
     },
     {
       "name": "irregularity-50",
       "frames": [
         0
       ],
-      "hash": "6B00DA0CE1797540A287175130D93A7B730D72C7912191C69C5B03806A603EE5"
+      "hash": "880EA81F67A7B99D8188F8F3F638703F416E734EC7C3B94905A10D51DF4C632E"
     },
     {
       "name": "irregularity-100",
       "frames": [
         0
       ],
-      "hash": "1BD924B421B4E42838E21F52777C758790E7C2D8E5124D2B90DBC2FEB3DC378C"
+      "hash": "D9B1D6A38BC320A271C2A59EA1D65BAADA698894600238B4181EB7594EE4DC3A"
     },
     {
       "name": "irregularity-animated-frames",
@@ -151,7 +207,7 @@
         200,
         299
       ],
-      "hash": "3BFA833237179A94706BE46972993C604F12D9B54E55349D7A0B2DE3883977BF"
+      "hash": "7F72BF3DE7F264BB67CAD1BD74583A3A3C753EEEEBF4981911809393EFBAC79F"
     },
     {
       "name": "hold-frames-3-frames",
@@ -162,7 +218,7 @@
         5,
         6
       ],
-      "hash": "13985C525F475AB3898B6C42CC2E53840A3C30CE133F8026B11D1D83EBA04739"
+      "hash": "587578D75E55FE5A841B3EB9B8BB550B9772DFFDC534F6C8300DE8F0E506E50E"
     },
     {
       "name": "hold-frames-1-frames",
@@ -172,7 +228,7 @@
         2,
         3
       ],
-      "hash": "C83957D1256EE11EEA48D4D5283A3ED3EDDB89B1BAFFAED7A1689C5B97F61635"
+      "hash": "F4C4E0BBCF64F93D85CE179852007BE8916F3B6E67204C36DDDE4BC44F260EDD"
     }
   ]
 }
