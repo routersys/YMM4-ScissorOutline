@@ -87,6 +87,23 @@ public sealed class ContourTracerTests
     }
 
     [Fact]
+    public void CellsSeparatedByLongEmptyStretchesAreAllTraced()
+    {
+        const int width = 700;
+        const int height = 400;
+        var mask = new byte[width * height];
+        var cells = new[] { (0, 0), (699, 0), (350, 200), (352, 202), (0, 399), (699, 399), (64, 100), (66, 100) };
+        foreach (var (x, y) in cells)
+            mask[y * width + x] = 1;
+
+        var loops = Trace(mask, width, height);
+
+        Assert.Equal(cells.Length, loops.LoopCount);
+        Assert.Equal(cells.Length * 4, loops.PointCount);
+        Assert.All(Enumerable.Range(0, loops.LoopCount), loop => Assert.Equal(2L, loops.GetDoubleArea(loop)));
+    }
+
+    [Fact]
     public void NothingInsideGivesNoLoops()
     {
         var loops = Trace(["...", "...", "..."]);
