@@ -171,6 +171,75 @@ public sealed class ScissorOutlineShapeTests
         Assert.True(first.Starts.SequenceEqual(second.Starts));
     }
 
+    public static readonly TheoryData<double> PooledThicknesses = new() { 6, 24, 40, 60, 160, 320 };
+
+    static byte[] Pool(byte[] alpha, int level, out int pooledWidth, out int pooledHeight)
+    {
+        var block = 1 << level;
+        pooledWidth = (Width + block - 1) / block;
+        pooledHeight = (Height + block - 1) / block;
+        var pooled = new byte[pooledWidth * pooledHeight];
+        for (var y = 0; y < Height; y++)
+        {
+            for (var x = 0; x < Width; x++)
+            {
+                if (alpha[y * Width + x] > ScissorOutlineSettings.AlphaThreshold)
+                    pooled[(y >> level) * pooledWidth + (x >> level)] = 255;
+            }
+        }
+
+        return pooled;
+    }
+
+    static int PoolLevel(ScissorOutlineParameters parameters)
+        => Math.Min(System.Numerics.BitOperations.Log2((uint)ScissorOutlineSettings.CreatePlan(parameters, Width, Height).Cell), 4);
+
+    [Theory]
+    [MemberData(nameof(PooledThicknesses))]
+    public void APooledImageGivesTheSameShapeAsTheFullImage(double thickness)
+    {
+        foreach (var (name, alpha) in Subjects())
+        {
+            var parameters = Parameters(thickness, 0.5, 0.3, ScissorOutlineQuality.High, 5);
+            var level = PoolLevel(parameters);
+            var pooled = Pool(alpha, level, out var pooledWidth, out var pooledHeight);
+
+            var full = Build(alpha, parameters);
+            var fromPooled = new ScissorOutlineShape();
+            fromPooled.BuildPooled(pooled, pooledWidth, pooledHeight, pooledWidth, level, Width, Height, 0f, 0f, parameters);
+
+            Assert.True(full.VertexCount > 0, name);
+            Assert.True(full.Vertices.SequenceEqual(fromPooled.Vertices), name);
+            Assert.True(full.Starts.SequenceEqual(fromPooled.Starts), name);
+        }
+    }
+
+    [Fact]
+    public void APooledBuildAndAFullBuildOfTheSameImageAreTheSameInput()
+    {
+        var alpha = Silhouettes.Blobs(Width, Height, 3, 7);
+        var parameters = Parameters(40, 0.5, 0.3, ScissorOutlineQuality.High, 5);
+        var level = PoolLevel(parameters);
+        var pooled = Pool(alpha, level, out var pooledWidth, out var pooledHeight);
+        var shape = new ScissorOutlineShape();
+
+        var first = shape.BuildPooled(pooled, pooledWidth, pooledHeight, pooledWidth, level, Width, Height, 0f, 0f, parameters);
+        var second = shape.Build(alpha, Width, Height, Width, 0f, 0f, parameters);
+
+        Assert.Equal(2, level);
+        Assert.Equal(ScissorOutlineShapeChange.Rebuilt, first);
+        Assert.Equal(ScissorOutlineShapeChange.Unchanged, second);
+    }
+
+    [Fact]
+    public void APoolLevelBeyondTheCellIsRefused()
+    {
+        var pooled = new byte[100 * 80];
+        var shape = new ScissorOutlineShape();
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => shape.BuildPooled(pooled, 100, 80, 100, 1, Width, Height, 0f, 0f, Parameters(6, 0.5, 0.3)));
+    }
+
     [Fact]
     public void ARepeatedBuildOfTheSameInputIsReportedAsUnchanged()
     {
