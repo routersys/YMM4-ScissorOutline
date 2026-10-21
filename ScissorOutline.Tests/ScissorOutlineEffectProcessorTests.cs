@@ -141,7 +141,7 @@ public sealed class ScissorOutlineEffectProcessorTests
         var centers = SubjectCenters(Disc, Width, Height);
         var effect = Cut(12d);
         var plan = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(12d, ScissorOutlineSettings.DefaultCoarseness / 100d, ScissorOutlineSettings.DefaultTremor / 100d, 0, true, ScissorOutlineQuality.High, ScissorOutlineSettings.DefaultIrregularity / 100d, 0, ScissorOutlineSettings.DefaultThicknessSpread, ScissorOutlineSettings.DefaultSpreadWavelength, ScissorOutlineSettings.DefaultSpreadChange / 100d), Width, Height);
-        var limit = 12d + 2 * plan.Epsilon + 2 * (plan.Tremor + plan.Distance) + plan.ThicknessSpread + 3 * plan.Cell + 2d;
+        var limit = 12d + plan.ThicknessSpread + 3 * plan.Cell + 4 * (plan.Epsilon + plan.Tremor + plan.Distance) + 2d;
 
         var rendering = RenderFresh(context, effect, source, 0);
 

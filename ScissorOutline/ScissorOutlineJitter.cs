@@ -1,32 +1,24 @@
-using System.Numerics;
-
 namespace ScissorOutline;
 
 internal static class ScissorOutlineJitter
 {
-    private const double InverseSquareRootOfTwo = 0.70710678118654752;
     private const uint ToleranceSalt = 0x68E31DA4u;
     private const uint WaveSalt = 0xB5297A4Du;
     private const uint SplitSalt = 0x2545F491u;
     private const uint ThicknessSalt = 0x7F4A7C15u;
+    private const uint ShiftSalt = 0x3C6EF372u;
 
     public static uint Variation(int seed, int frame)
         => unchecked((uint)seed + (uint)frame * 0x9E3779B9u);
-
-    public static Vector2 GetOffset(int x, int y, uint variation, double amplitude)
-    {
-        var hash = Mix(unchecked((uint)x * 0x9E3779B1u ^ (uint)y * 0x85EBCA77u ^ variation * 0xC2B2AE3Du));
-        var horizontal = (hash & 0xFFFF) / 32767.5 - 1.0;
-        var vertical = (hash >> 16) / 32767.5 - 1.0;
-        var scale = amplitude * InverseSquareRootOfTwo;
-        return new Vector2((float)(horizontal * scale), (float)(vertical * scale));
-    }
 
     public static double GetToleranceFactor(int fromX, int fromY, int toX, int toY, uint variation, double spread)
     {
         var unit = Unit(fromX, fromY, toX, toY, variation ^ ToleranceSalt);
         return 1.0 - ScissorOutlineSettings.IrregularEpsilonShrink * spread * (1.0 - unit);
     }
+
+    public static double GetShiftUnit(int fromX, int fromY, int toX, int toY, uint variation)
+        => Unit(fromX, fromY, toX, toY, variation ^ ShiftSalt);
 
     public static double GetSplitUnit(int fromX, int fromY, int toX, int toY, uint variation)
         => Unit(fromX, fromY, toX, toY, variation ^ SplitSalt);

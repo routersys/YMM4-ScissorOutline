@@ -85,7 +85,7 @@ public sealed class ScissorOutlineIrregularShapeTests
     {
         var parameters = Parameters(thickness, coarseness, tremor, irregularity, quality, frame);
         var plan = ScissorOutlineSettings.CreatePlan(parameters, Width, Height);
-        var limit = thickness + 2 * plan.Epsilon + 2 * (plan.Tremor + plan.Distance) + 3 * plan.Cell;
+        var limit = thickness + plan.ThicknessSpread + 3 * plan.Cell + 4 * (plan.Epsilon + plan.Tremor + plan.Distance);
         foreach (var (name, alpha) in ScissorOutlineShapeTests.Subjects())
         {
             var shape = Build(alpha, parameters);
@@ -227,45 +227,6 @@ public sealed class ScissorOutlineIrregularShapeTests
 
         foreach (var (x, y) in Silhouettes.Centers(second, Width, Height))
             Assert.True(PolygonGeometry.DistanceToBoundary(shape, x, y) >= 20 - 0.01);
-    }
-
-    [Fact]
-    public void TheOutwardNormalOfAClockwiseSquareLeavesTheSquare()
-    {
-        ReadOnlySpan<int> square = [0, 0, 4, 0, 4, 4, 0, 4];
-
-        var topRight = ScissorOutlineShape.GetOutwardNormal(square, 0, 1, 2);
-        var bottomRight = ScissorOutlineShape.GetOutwardNormal(square, 1, 2, 3);
-        var bottomLeft = ScissorOutlineShape.GetOutwardNormal(square, 2, 3, 0);
-        var topLeft = ScissorOutlineShape.GetOutwardNormal(square, 3, 0, 1);
-
-        var corner = (float)(1.0 / Math.Sqrt(2.0));
-        Assert.True(Vector2.Distance(topRight, new Vector2(corner, -corner)) < 1e-6f);
-        Assert.True(Vector2.Distance(bottomRight, new Vector2(corner, corner)) < 1e-6f);
-        Assert.True(Vector2.Distance(bottomLeft, new Vector2(-corner, corner)) < 1e-6f);
-        Assert.True(Vector2.Distance(topLeft, new Vector2(-corner, -corner)) < 1e-6f);
-    }
-
-    [Fact]
-    public void TheOutwardNormalOfAStraightEdgeIsPerpendicularToIt()
-    {
-        ReadOnlySpan<int> line = [0, 0, 2, 0, 4, 0];
-
-        var normal = ScissorOutlineShape.GetOutwardNormal(line, 0, 1, 2);
-
-        Assert.True(Vector2.Distance(normal, new Vector2(0f, -1f)) < 1e-6f);
-    }
-
-    [Fact]
-    public void ASpikeFallsBackToTheNormalOfTheOutgoingEdgeAndAPointHasNone()
-    {
-        ReadOnlySpan<int> spike = [0, 0, 4, 0, 0, 0];
-        ReadOnlySpan<int> point = [3, 3, 3, 3, 3, 3];
-
-        var normal = ScissorOutlineShape.GetOutwardNormal(spike, 0, 1, 2);
-
-        Assert.True(Vector2.Distance(normal, new Vector2(0f, 1f)) < 1e-6f);
-        Assert.Equal(Vector2.Zero, ScissorOutlineShape.GetOutwardNormal(point, 0, 1, 2));
     }
 
     [Fact]

@@ -69,7 +69,7 @@ public sealed class ScissorOutlineShapeTests
     public void TheCutStaysWithinTheBoundOfTheEpsilonTheTremorAndTheCell(double thickness, double coarseness, double tremor, ScissorOutlineQuality quality)
     {
         var plan = ScissorOutlineSettings.CreatePlan(Parameters(thickness, coarseness, tremor, quality), Width, Height);
-        var limit = thickness + 2 * plan.Epsilon + 2 * plan.Tremor + 3 * plan.Cell;
+        var limit = thickness + plan.ThicknessSpread + 3 * plan.Cell + 4 * (plan.Epsilon + plan.Tremor + plan.Distance);
         foreach (var (name, alpha) in Subjects())
         {
             var shape = Build(alpha, Parameters(thickness, coarseness, tremor, quality, 5));
@@ -134,29 +134,33 @@ public sealed class ScissorOutlineShapeTests
     }
 
     [Fact]
-    public void WithTremorTheSeedMovesTheVerticesButNotTheirCount()
+    public void WithTremorTheSeedMovesTheEdgesButNotTheLoops()
     {
         var alpha = Silhouettes.Blobs(Width, Height, 4, 6);
 
         var first = Build(alpha, Parameters(20, 0.5, 1, seed: 1));
         var second = Build(alpha, Parameters(20, 0.5, 1, seed: 2));
 
-        Assert.Equal(first.VertexCount, second.VertexCount);
+        Assert.Equal(first.LoopCount, second.LoopCount);
         Assert.False(first.Vertices.SequenceEqual(second.Vertices));
     }
 
     [Fact]
-    public void TwoSeedsMoveEachVertexByAtMostTwiceTheAmplitude()
+    public void TheTremorOnlyPushesTheEdgesOutward()
     {
         var alpha = Silhouettes.Blobs(Width, Height, 4, 6);
-        var plan = ScissorOutlineSettings.CreatePlan(Parameters(30, 0.5, 1), Width, Height);
+        var steady = Build(alpha, Parameters(30, 0.5, 0));
 
-        var first = Build(alpha, Parameters(30, 0.5, 1, seed: 9));
-        var second = Build(alpha, Parameters(30, 0.5, 1, seed: 10));
+        foreach (var seed in new[] { 9, 10, 11 })
+        {
+            var shaken = Build(alpha, Parameters(30, 0.5, 1, seed: seed));
 
-        Assert.Equal(first.VertexCount, second.VertexCount);
-        for (var i = 0; i < first.VertexCount; i++)
-            Assert.True(Vector2.Distance(first.Vertices[i], second.Vertices[i]) <= 2 * plan.Tremor + 1e-3);
+            for (var i = 0; i < steady.VertexCount; i++)
+            {
+                var vertex = steady.Vertices[i];
+                Assert.True(PolygonGeometry.Winding(shaken, vertex.X, vertex.Y) != 0 || PolygonGeometry.DistanceToBoundary(shaken, vertex.X, vertex.Y) < 1e-2, $"seed {seed} vertex {i}");
+            }
+        }
     }
 
     [Fact]

@@ -1,26 +1,35 @@
-using System.Numerics;
-
 namespace ScissorOutline.Tests;
 
 public sealed class ScissorOutlineJitterTests
 {
     [Fact]
-    public void TheOffsetNeverExceedsTheAmplitude()
+    public void TheShiftUnitStaysInTheHalfOpenIntervalAndDependsOnEveryArgument()
     {
-        for (var variation = 0u; variation < 6u; variation++)
+        var sum = 0.0;
+        const int count = 20000;
+        for (var i = 0; i < count; i++)
         {
-            for (var x = -300; x <= 300; x += 7)
-            {
-                for (var y = -300; y <= 300; y += 11)
-                    Assert.True(ScissorOutlineJitter.GetOffset(x, y, variation * 7919u, 5.0).Length() <= 5.0 + 1e-4);
-            }
+            var value = ScissorOutlineJitter.GetShiftUnit(i, i * 3 - 7, i % 13, -i, 11u);
+
+            Assert.InRange(value, 0.0, 1.0 - 1e-9);
+            sum += value;
         }
+
+        var baseline = ScissorOutlineJitter.GetShiftUnit(3, 5, 7, 9, 1u);
+        Assert.InRange(sum / count, 0.48, 0.52);
+        Assert.NotEqual(baseline, ScissorOutlineJitter.GetShiftUnit(4, 5, 7, 9, 1u));
+        Assert.NotEqual(baseline, ScissorOutlineJitter.GetShiftUnit(3, 6, 7, 9, 1u));
+        Assert.NotEqual(baseline, ScissorOutlineJitter.GetShiftUnit(3, 5, 8, 9, 1u));
+        Assert.NotEqual(baseline, ScissorOutlineJitter.GetShiftUnit(3, 5, 7, 10, 1u));
+        Assert.NotEqual(baseline, ScissorOutlineJitter.GetShiftUnit(3, 5, 7, 9, 2u));
+        Assert.Equal(baseline, ScissorOutlineJitter.GetShiftUnit(3, 5, 7, 9, 1u));
     }
 
     [Fact]
-    public void ZeroAmplitudeGivesNoOffset()
+    public void TheShiftUnitDiffersFromTheOtherRandomValuesOfTheSameArguments()
     {
-        Assert.Equal(Vector2.Zero, ScissorOutlineJitter.GetOffset(12, -7, 99u, 0.0));
+        Assert.NotEqual(ScissorOutlineJitter.GetShiftUnit(3, 5, 7, 9, 1u), ScissorOutlineJitter.GetSplitUnit(3, 5, 7, 9, 1u));
+        Assert.NotEqual(ScissorOutlineJitter.GetShiftUnit(3, 5, 7, 9, 1u), ScissorOutlineJitter.Unit(3, 5, 7, 9, 1u));
     }
 
     [Fact]
@@ -31,15 +40,6 @@ public sealed class ScissorOutlineJitterTests
         Assert.NotEqual(ScissorOutlineJitter.Variation(5, 1), ScissorOutlineJitter.Variation(5, 2));
         Assert.NotEqual(ScissorOutlineJitter.Variation(5, 1), ScissorOutlineJitter.Variation(6, 1));
         Assert.Equal(ScissorOutlineJitter.Variation(5, 3), ScissorOutlineJitter.Variation(5, 3));
-    }
-
-    [Fact]
-    public void ADifferentFrameMovesTheOffset()
-    {
-        var first = ScissorOutlineJitter.GetOffset(30, 40, ScissorOutlineJitter.Variation(2, 0), 6.0);
-        var second = ScissorOutlineJitter.GetOffset(30, 40, ScissorOutlineJitter.Variation(2, 1), 6.0);
-
-        Assert.NotEqual(first, second);
     }
 
     [Fact]
