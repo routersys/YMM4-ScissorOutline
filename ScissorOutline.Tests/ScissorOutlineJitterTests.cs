@@ -74,8 +74,8 @@ public sealed class ScissorOutlineJitterTests
 
     [Theory]
     [InlineData(0.0, 1.0, 1.0)]
-    [InlineData(0.5, 0.625, 1.5)]
-    [InlineData(1.0, 0.25, 2.0)]
+    [InlineData(0.5, 0.625, 1.0)]
+    [InlineData(1.0, 0.25, 1.0)]
     public void TheToleranceFactorStaysWithinItsRange(double spread, double minimum, double maximum)
     {
         for (var i = 0; i < 5000; i++)
@@ -90,7 +90,7 @@ public sealed class ScissorOutlineJitterTests
     }
 
     [Fact]
-    public void TheToleranceFactorReachesBothEndsAndAveragesAboveOne()
+    public void TheToleranceFactorReachesBothEndsAndAveragesBelowOne()
     {
         var minimum = double.MaxValue;
         var maximum = double.MinValue;
@@ -105,8 +105,8 @@ public sealed class ScissorOutlineJitterTests
         }
 
         Assert.InRange(minimum, 0.25, 0.3);
-        Assert.InRange(maximum, 1.95, 2.0);
-        Assert.InRange(sum / count, 1.10, 1.15);
+        Assert.InRange(maximum, 0.99, 1.0);
+        Assert.InRange(sum / count, 0.60, 0.65);
     }
 
     [Fact]

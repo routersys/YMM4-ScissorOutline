@@ -14,7 +14,6 @@ internal static class ScissorOutlineSettings
     public const int DefaultHoldFrames = 3;
     public const int HoldFramesSliderMaximum = 12;
     public const double IrregularEpsilonShrink = 0.75;
-    public const double IrregularEpsilonGrowth = 1.0;
     public const double IrregularDistancePerThickness = 0.5;
     public const double WavelengthPerThickness = 2.0;
     public const double MinimumWavelength = 16.0;
@@ -58,13 +57,12 @@ internal static class ScissorOutlineSettings
         var tremor = TremorPerThickness * Math.Clamp(parameters.Tremor, 0.0, 1.0) * thickness;
         var irregularity = Math.Clamp(parameters.Irregularity, 0.0, 1.0);
         var distance = IrregularDistancePerThickness * irregularity * thickness;
-        var epsilonGrowth = 1.0 + IrregularEpsilonGrowth * irregularity;
         var longSide = Math.Max(Math.Max(width, height), 1);
         var gridCell = CeilingPowerOfTwo((longSide + GetMaximumGridSide(parameters.Quality) - 1) / GetMaximumGridSide(parameters.Quality));
-        var radiusCell = FloorPowerOfTwo((thickness + requestedEpsilon * epsilonGrowth + tremor + distance) / CellsPerRadius);
+        var radiusCell = FloorPowerOfTwo((thickness + requestedEpsilon + tremor + distance) / CellsPerRadius);
         var cell = Math.Max(gridCell, radiusCell);
         var epsilon = Math.Max(requestedEpsilon, cell);
-        var radius = thickness + epsilon * epsilonGrowth + tremor + distance + SlackCells * cell;
+        var radius = thickness + epsilon + tremor + distance + SlackCells * cell;
         var radiusCells = radius / cell;
         return new ScissorOutlinePlan(
             cell,
@@ -74,7 +72,6 @@ internal static class ScissorOutlineSettings
             (int)Math.Floor(radiusCells * radiusCells),
             epsilon,
             irregularity,
-            epsilon * epsilonGrowth,
             tremor,
             distance,
             Math.Max(MinimumWavelength, WavelengthPerThickness * thickness));

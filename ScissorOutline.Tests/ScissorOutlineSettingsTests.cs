@@ -62,7 +62,7 @@ public sealed class ScissorOutlineSettingsTests
     }
 
     [Fact]
-    public void TheIrregularityAddsTheLargestToleranceAndTheDistanceToTheRadius()
+    public void TheIrregularityAddsTheDistanceToTheRadius()
     {
         var parameters = new ScissorOutlineParameters(40, 0.5, 0.4, 0, true, ScissorOutlineQuality.High, 0.5);
 
@@ -70,13 +70,12 @@ public sealed class ScissorOutlineSettingsTests
 
         Assert.Equal(8, plan.Cell);
         Assert.Equal(10.0, plan.Epsilon);
-        Assert.Equal(15.0, plan.EpsilonLimit);
         Assert.Equal(0.5, plan.EpsilonSpread);
         Assert.Equal(4.0, plan.Tremor);
         Assert.Equal(10.0, plan.Distance);
         Assert.Equal(80.0, plan.Wavelength);
-        Assert.Equal(81.0, plan.Radius);
-        Assert.Equal(102, plan.RadiusSquaredCells);
+        Assert.Equal(76.0, plan.Radius);
+        Assert.Equal(90, plan.RadiusSquaredCells);
     }
 
     [Fact]
@@ -87,7 +86,7 @@ public sealed class ScissorOutlineSettingsTests
 
         Assert.Equal(plain, zero);
         Assert.Equal(60.0, plain.Radius);
-        Assert.Equal(plain.Epsilon, plain.EpsilonLimit);
+        Assert.Equal(0.0, plain.EpsilonSpread);
         Assert.Equal(0.0, plain.Distance);
     }
 

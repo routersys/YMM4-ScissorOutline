@@ -8,7 +8,6 @@ internal readonly record struct ScissorOutlinePlan(
     int RadiusSquaredCells,
     double Epsilon,
     double EpsilonSpread,
-    double EpsilonLimit,
     double Tremor,
     double Distance,
     double Wavelength);

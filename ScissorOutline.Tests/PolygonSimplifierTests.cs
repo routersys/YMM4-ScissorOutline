@@ -219,11 +219,11 @@ public sealed class PolygonSimplifierTests
     [Theory]
     [InlineData(0.5)]
     [InlineData(1.0)]
-    public void EveryDroppedVertexLiesWithinTheLargestToleranceOfTheEdgeThatReplacesIt(double spread)
+    public void EveryDroppedVertexLiesWithinTheBaseToleranceOfTheEdgeThatReplacesIt(double spread)
     {
         var source = TraceDisc(24.0, 1.5);
         var original = Points(source, 0);
-        var limit = 2.0 * (1.0 + ScissorOutlineSettings.IrregularEpsilonGrowth * spread);
+        const double limit = 2.0;
 
         foreach (var variation in new[] { 1u, 2u, 3u, 4u })
         {

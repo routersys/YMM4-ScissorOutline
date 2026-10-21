@@ -24,8 +24,7 @@ internal static class ScissorOutlineJitter
     public static double GetToleranceFactor(int fromX, int fromY, int toX, int toY, uint variation, double spread)
     {
         var unit = Unit(fromX, fromY, toX, toY, variation ^ ToleranceSalt);
-        return 1.0 - ScissorOutlineSettings.IrregularEpsilonShrink * spread
-            + (ScissorOutlineSettings.IrregularEpsilonShrink + ScissorOutlineSettings.IrregularEpsilonGrowth) * spread * unit;
+        return 1.0 - ScissorOutlineSettings.IrregularEpsilonShrink * spread * (1.0 - unit);
     }
 
     public static double GetSplitUnit(int fromX, int fromY, int toX, int toY, uint variation)
