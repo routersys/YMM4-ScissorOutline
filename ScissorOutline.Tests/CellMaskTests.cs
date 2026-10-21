@@ -10,9 +10,9 @@ public sealed class CellMaskTests
     {
         var gridWidth = (width + cell - 1) / cell + 2 * Padding;
         var gridHeight = (height + cell - 1) / cell + 2 * Padding;
-        var cells = new byte[gridWidth * gridHeight];
-        CellMask.Build(alpha, width, height, stride, cell, gridWidth, cells);
-        return cells;
+        var bits = new ulong[BitGrid.WordsPerRow(gridWidth) * gridHeight];
+        CellMask.Build(alpha, width, height, stride, cell, gridWidth, bits);
+        return Masks.ToBytes(bits, gridWidth, gridHeight);
     }
 
     [Fact]

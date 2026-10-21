@@ -10,19 +10,20 @@ internal enum ScissorOutlineShapeChange
 
 internal sealed class ScissorOutlineShape
 {
-    private readonly DistanceTransform _distanceTransform = new();
+    private readonly DiscDilation _dilation = new();
     private readonly ContourTracer _tracer = new();
     private readonly PolygonSimplifier _simplifier = new();
     private readonly ContourLoops _traced = new();
     private readonly ContourLoops _simplified = new();
 
-    private byte[] _cells = [];
-    private byte[] _nextCells = [];
-    private float[] _distance = [];
+    private ulong[] _cells = [];
+    private ulong[] _nextCells = [];
+    private ulong[] _inside = [];
     private CellKey _cellKey;
     private bool _hasCells;
     private bool _hasSubject;
-    private bool _hasDistance;
+    private bool _hasTraced;
+    private int _tracedRadius;
     private ShapeKey _shapeKey;
     private bool _hasShape;
     private Vector2[] _vertices = new Vector2[256];
@@ -40,9 +41,9 @@ internal sealed class ScissorOutlineShape
     {
         var plan = ScissorOutlineSettings.CreatePlan(parameters, width, height);
         var cellKey = new CellKey(width, height, plan.Cell);
-        var size = plan.GridWidth * plan.GridHeight;
+        var size = BitGrid.WordsPerRow(plan.GridWidth) * plan.GridHeight;
         if (_nextCells.Length < size)
-            _nextCells = new byte[size];
+            _nextCells = new ulong[size];
 
         var next = _nextCells.AsSpan(0, size);
         CellMask.Build(alpha, width, height, stride, plan.Cell, plan.GridWidth, next);
@@ -52,8 +53,8 @@ internal sealed class ScissorOutlineShape
             (_cells, _nextCells) = (_nextCells, _cells);
             _cellKey = cellKey;
             _hasCells = true;
-            _hasDistance = false;
-            _hasSubject = _cells.AsSpan(0, size).IndexOfAnyExcept((byte)0) >= 0;
+            _hasTraced = false;
+            _hasSubject = _cells.AsSpan(0, size).IndexOfAnyExcept(0UL) >= 0;
         }
 
         var shapeKey = new ShapeKey(cellKey, plan.RadiusSquaredCells, plan.Epsilon, plan.Tremor, parameters.Seed, parameters.FillHoles, originX, originY);
@@ -69,15 +70,16 @@ internal sealed class ScissorOutlineShape
             return ScissorOutlineShapeChange.Rebuilt;
         }
 
-        if (!_hasDistance)
+        if (!_hasTraced || _tracedRadius != plan.RadiusSquaredCells)
         {
-            if (_distance.Length < size)
-                _distance = new float[size];
-            _distanceTransform.Compute(_cells.AsSpan(0, size), plan.GridWidth, plan.GridHeight, _distance.AsSpan(0, size));
-            _hasDistance = true;
+            if (_inside.Length < size)
+                _inside = new ulong[size];
+            _dilation.Dilate(_cells.AsSpan(0, size), plan.GridWidth, plan.GridHeight, plan.RadiusSquaredCells, _inside.AsSpan(0, size));
+            _tracer.Trace(_inside.AsSpan(0, size), plan.GridWidth, plan.GridHeight, _traced);
+            _tracedRadius = plan.RadiusSquaredCells;
+            _hasTraced = true;
         }
 
-        _tracer.Trace(_distance.AsSpan(0, size), plan.GridWidth, plan.GridHeight, plan.RadiusSquaredCells, _traced);
         _simplified.Clear();
         var epsilonCells = plan.Epsilon / plan.Cell;
         for (var loop = 0; loop < _traced.LoopCount; loop++)

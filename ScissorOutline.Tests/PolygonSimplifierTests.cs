@@ -24,19 +24,19 @@ public sealed class PolygonSimplifierTests
     static ContourLoops TraceDisc(double radius, double scaleX = 1.0)
     {
         const int size = 80;
-        var distance = new float[size * size];
+        var mask = new byte[size * size];
         for (var y = 0; y < size; y++)
         {
             for (var x = 0; x < size; x++)
             {
                 var dx = (x + 0.5 - size / 2.0) / scaleX;
                 var dy = y + 0.5 - size / 2.0;
-                distance[y * size + x] = Math.Sqrt(dx * dx + dy * dy) <= radius ? 0f : 9f;
+                mask[y * size + x] = Math.Sqrt(dx * dx + dy * dy) <= radius ? (byte)1 : (byte)0;
             }
         }
 
         var loops = new ContourLoops();
-        new ContourTracer().Trace(distance, size, size, 1f, loops);
+        new ContourTracer().Trace(Masks.ToBits(mask, size, size), size, size, loops);
         return loops;
     }
 

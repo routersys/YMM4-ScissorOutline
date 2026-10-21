@@ -9,21 +9,21 @@ public sealed class ContourTracerTests
         { 24, 24, 3, 30 },
         { 40, 17, 4, 65 },
         { 31, 31, 5, 15 },
+        { 70, 23, 6, 50 },
+        { 130, 20, 7, 35 },
     };
 
     static ContourLoops Trace(string[] rows)
     {
-        var height = rows.Length;
-        var width = rows[0].Length;
-        var distance = new float[width * height];
-        for (var y = 0; y < height; y++)
-        {
-            for (var x = 0; x < width; x++)
-                distance[y * width + x] = rows[y][x] == '#' ? 0f : 100f;
-        }
-
         var loops = new ContourLoops();
-        new ContourTracer().Trace(distance, width, height, 1f, loops);
+        new ContourTracer().Trace(Tests.Masks.FromRows(rows), rows[0].Length, rows.Length, loops);
+        return loops;
+    }
+
+    static ContourLoops Trace(byte[] mask, int width, int height)
+    {
+        var loops = new ContourLoops();
+        new ContourTracer().Trace(Tests.Masks.ToBits(mask, width, height), width, height, loops);
         return loops;
     }
 
@@ -87,19 +87,6 @@ public sealed class ContourTracerTests
     }
 
     [Fact]
-    public void ADistanceEqualToTheLimitIsInside()
-    {
-        var distance = new float[] { 1f, 2f, 1f };
-        var loops = new ContourLoops();
-
-        new ContourTracer().Trace(distance, 3, 1, 1f, loops);
-
-        Assert.Equal(2, loops.LoopCount);
-        Assert.Equal(2, loops.GetDoubleArea(0));
-        Assert.Equal(2, loops.GetDoubleArea(1));
-    }
-
-    [Fact]
     public void NothingInsideGivesNoLoops()
     {
         var loops = Trace(["...", "...", "..."]);
@@ -109,14 +96,30 @@ public sealed class ContourTracerTests
     }
 
     [Theory]
+    [InlineData(62, 66)]
+    [InlineData(63, 64)]
+    [InlineData(64, 65)]
+    [InlineData(0, 129)]
+    public void ARunAcrossAWordBoundaryIsOneLoop(int first, int last)
+    {
+        var mask = new byte[130 * 3];
+        for (var x = first; x <= last; x++)
+            mask[1 * 130 + x] = 1;
+
+        var loops = Trace(mask, 130, 3);
+
+        Assert.Equal(1, loops.LoopCount);
+        Assert.Equal(4, loops.PointCount);
+        Assert.Equal(2L * (last - first + 1), loops.GetDoubleArea(0));
+    }
+
+    [Theory]
     [MemberData(nameof(Masks))]
     public void TheSignedAreasAddUpToTheNumberOfInsideCells(int width, int height, int seed, int percent)
     {
-        var mask = DistanceTransformTests.RandomMask(width, height, seed, percent);
-        var distance = mask.Select(v => v != 0 ? 0f : 9f).ToArray();
-        var loops = new ContourLoops();
+        var mask = Tests.Masks.Random(width, height, seed, percent);
 
-        new ContourTracer().Trace(distance, width, height, 1f, loops);
+        var loops = Trace(mask, width, height);
 
         long total = 0;
         for (var loop = 0; loop < loops.LoopCount; loop++)
@@ -128,11 +131,9 @@ public sealed class ContourTracerTests
     [MemberData(nameof(Masks))]
     public void EveryEdgeIsAxisAlignedAndEveryVertexIsATurn(int width, int height, int seed, int percent)
     {
-        var mask = DistanceTransformTests.RandomMask(width, height, seed, percent);
-        var distance = mask.Select(v => v != 0 ? 0f : 9f).ToArray();
-        var loops = new ContourLoops();
+        var mask = Tests.Masks.Random(width, height, seed, percent);
 
-        new ContourTracer().Trace(distance, width, height, 1f, loops);
+        var loops = Trace(mask, width, height);
 
         for (var loop = 0; loop < loops.LoopCount; loop++)
         {
@@ -154,12 +155,12 @@ public sealed class ContourTracerTests
     {
         var tracer = new ContourTracer();
         var loops = new ContourLoops();
-        var large = Enumerable.Repeat(0f, 30 * 30).ToArray();
-        var small = new float[] { 5f, 0f, 5f };
+        var large = Enumerable.Repeat((byte)1, 30 * 30).ToArray();
+        var small = new byte[] { 0, 1, 0 };
 
-        tracer.Trace(large, 30, 30, 1f, loops);
+        tracer.Trace(Tests.Masks.ToBits(large, 30, 30), 30, 30, loops);
         var largeCount = loops.PointCount;
-        tracer.Trace(small, 3, 1, 1f, loops);
+        tracer.Trace(Tests.Masks.ToBits(small, 3, 1), 3, 1, loops);
 
         Assert.Equal(4, largeCount);
         Assert.Equal(1, loops.LoopCount);
