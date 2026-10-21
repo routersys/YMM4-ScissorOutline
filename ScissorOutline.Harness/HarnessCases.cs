@@ -40,7 +40,7 @@ internal static class HarnessCases
         yield return ("thickness-24-to-60", () => Create(), effect => effect.Thickness.Values[0].Value = 60, 0);
         yield return ("thickness-24-to-25", () => Create(), effect => effect.Thickness.Values[0].Value = 25, 0);
         yield return ("coarseness-50-to-0", () => Create(), effect => effect.Coarseness.Values[0].Value = 0, 0);
-        yield return ("tremor-30-to-100", () => Create(), effect => effect.Tremor.Values[0].Value = 100, 0);
+        yield return ("tremor-50-to-100", () => Create(), effect => effect.Tremor.Values[0].Value = 100, 0);
         yield return ("seed-0-to-7", () => Create(), effect => effect.Seed = 7, 0);
         yield return ("quality-high-to-balanced-thickness-4", () => Create(effect => effect.Thickness.Values[0].Value = 4), effect => effect.Quality = ScissorOutlineQuality.Balanced, 0);
         yield return ("color-white-to-red", () => Create(), effect => effect.PaperColor = Colors.Red, 0);
