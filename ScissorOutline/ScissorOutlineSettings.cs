@@ -8,13 +8,13 @@ internal static class ScissorOutlineSettings
     public const double DefaultCoarseness = 50.0;
     public const double DefaultTremor = 30.0;
     public const double DefaultOpacity = 100.0;
-    public const double EpsilonPerThickness = 0.5;
-    public const double TremorPerThickness = 0.25;
+    public const double EpsilonPerThickness = 1.0;
+    public const double TremorPerThickness = 1.0;
     public const double DefaultIrregularity = 50.0;
     public const int DefaultHoldFrames = 3;
     public const int HoldFramesSliderMaximum = 12;
     public const double IrregularEpsilonShrink = 0.75;
-    public const double IrregularDistancePerThickness = 0.5;
+    public const double IrregularDistancePerThickness = 1.0;
     public const double WavelengthPerThickness = 2.0;
     public const double MinimumWavelength = 16.0;
     public const double CellsPerRadius = 8.0;

@@ -226,7 +226,7 @@ public sealed class ScissorOutlineShapeTests
         var first = shape.BuildPooled(pooled, pooledWidth, pooledHeight, pooledWidth, level, Width, Height, 0f, 0f, parameters);
         var second = shape.Build(alpha, Width, Height, Width, 0f, 0f, parameters);
 
-        Assert.Equal(2, level);
+        Assert.Equal(3, level);
         Assert.Equal(ScissorOutlineShapeChange.Rebuilt, first);
         Assert.Equal(ScissorOutlineShapeChange.Unchanged, second);
     }
