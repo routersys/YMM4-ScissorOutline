@@ -8,12 +8,12 @@ internal static class CellMask
     private const int Lanes = 16;
     private const int LaneShift = 4;
 
-    public static void Build(ReadOnlySpan<byte> alpha, int width, int height, int stride, int cell, int gridWidth, Span<ulong> cells)
+    public static void Build(ReadOnlySpan<byte> alpha, int width, int height, int stride, int cell, int gridWidth, Span<ulong> cells, byte alphaThreshold = ScissorOutlineSettings.AlphaThreshold)
     {
         cells.Clear();
         var wordsPerRow = BitGrid.WordsPerRow(gridWidth);
         var shift = BitOperations.Log2((uint)cell);
-        var threshold = Vector128.Create(ScissorOutlineSettings.AlphaThreshold);
+        var threshold = Vector128.Create(alphaThreshold);
         for (var y = 0; y < height; y++)
         {
             var row = alpha.Slice(y * stride, width);
@@ -28,7 +28,7 @@ internal static class CellMask
 
             for (; x < row.Length; x++)
             {
-                if (row[x] > ScissorOutlineSettings.AlphaThreshold)
+                if (row[x] > alphaThreshold)
                     Set(cellRow, (x >> shift) + ScissorOutlineSettings.PaddingCells, 1UL);
             }
         }
