@@ -313,6 +313,105 @@ public sealed class PolygonSimplifierTests
     }
 
     [Fact]
+    public void ABulgeToTheLeftOfTheChordGivesItsHeightAsTheDeviation()
+    {
+        int[] points = [0, 0, 1, -1, 2, -3, 3, -1, 4, 0];
+
+        Assert.Equal(3.0, PolygonSimplifier.GetOutwardDeviation(points, 5, 0, 4), 1e-12);
+    }
+
+    [Fact]
+    public void ANotchToTheRightOfTheChordGivesNoDeviation()
+    {
+        int[] points = [0, 0, 1, 1, 2, 3, 3, 1, 4, 0];
+
+        Assert.Equal(0.0, PolygonSimplifier.GetOutwardDeviation(points, 5, 0, 4));
+    }
+
+    [Fact]
+    public void OnlyTheBulgesCountWhenTheChainCrossesTheChord()
+    {
+        int[] points = [0, 0, 1, -2, 2, 1, 3, -1, 4, 0];
+
+        Assert.Equal(2.0, PolygonSimplifier.GetOutwardDeviation(points, 5, 0, 4), 1e-12);
+    }
+
+    [Fact]
+    public void TheDeviationIsMeasuredPerpendicularToATiltedChord()
+    {
+        int[] points = [0, 0, 1, 0, 2, 2];
+
+        Assert.Equal(Math.Sqrt(0.5), PolygonSimplifier.GetOutwardDeviation(points, 3, 0, 2), 1e-12);
+    }
+
+    [Fact]
+    public void ASectionThatWrapsAroundTheEndOfTheLoopIsMeasuredToo()
+    {
+        int[] points = [2, -3, 3, -1, 4, 0, 0, 0, 1, -1];
+
+        Assert.Equal(3.0, PolygonSimplifier.GetOutwardDeviation(points, 5, 3, 7), 1e-12);
+    }
+
+    [Fact]
+    public void AChordWithoutLengthGivesNoDeviation()
+    {
+        int[] points = [3, 3, 5, 5, 3, 3];
+
+        Assert.Equal(0.0, PolygonSimplifier.GetOutwardDeviation(points, 3, 0, 2));
+    }
+
+    [Theory]
+    [MemberData(nameof(Tolerances))]
+    public void EveryEdgeShiftedByItsDeviationHasTheWholeSectionOnItsInnerSide(double epsilon)
+    {
+        var source = TraceDisc(24.0, 1.5);
+        var original = Points(source, 0);
+        var result = Simplify(source, epsilon, 0.0, 0u);
+        var kept = Points(result, 0);
+        var shifts = result.Shifts.ToArray();
+        var indexes = kept.Select(point => Array.IndexOf(original, point)).ToArray();
+
+        Assert.Equal(kept.Length, shifts.Length);
+        for (var k = 0; k < kept.Length; k++)
+        {
+            var from = indexes[k];
+            var to = indexes[(k + 1) % kept.Length];
+            var a = original[from];
+            var b = original[to];
+            var length = Math.Sqrt((double)(b.X - a.X) * (b.X - a.X) + (double)(b.Y - a.Y) * (b.Y - a.Y));
+            var farthest = 0.0;
+            for (var i = (from + 1) % original.Length; i != to; i = (i + 1) % original.Length)
+            {
+                var left = ((b.Y - a.Y) * (double)(original[i].X - a.X) - (b.X - a.X) * (double)(original[i].Y - a.Y)) / length;
+                Assert.True(left <= shifts[k] + 1e-9);
+                farthest = Math.Max(farthest, left);
+            }
+
+            Assert.Equal(farthest, shifts[k], 1e-9);
+            Assert.InRange(shifts[k], 0.0, epsilon + 1e-9);
+        }
+    }
+
+    [Fact]
+    public void ARandomSplitStillKeepsEveryShiftWithinTheEpsilon()
+    {
+        var source = TraceDisc(24.0, 1.5);
+
+        var result = Simplify(source, 3.0, 1.0, 5u);
+
+        Assert.All(result.Shifts.ToArray(), shift => Assert.InRange(shift, 0.0, 3.0 + 1e-9));
+        Assert.Contains(result.Shifts.ToArray(), shift => shift > 0.0);
+    }
+
+    [Fact]
+    public void AClosedLoopOfThreeVerticesHasNoShift()
+    {
+        var result = Simplify(LoopOf((0, 0), (6, 0), (0, 6)), 1.0, 0.0, 0u);
+
+        Assert.Equal([0.0, 0.0, 0.0], result.Shifts.ToArray());
+    }
+
+    [Fact]
     public void ThePickedSplitIsTheSameForTheSameChainAndVariation()
     {
         int[] points = [0, 0, 1, 3, 2, 5, 3, 6, 4, 5, 5, 3, 6, 0];
