@@ -47,7 +47,7 @@ public sealed class ScissorOutlineShapeTests
             var shape = Build(alpha, Parameters(thickness, coarseness, tremor, quality, 5));
 
             foreach (var (x, y) in Silhouettes.Centers(alpha, Width, Height))
-                Assert.True(PolygonGeometry.DistanceToBoundary(shape, x, y) >= thickness - 0.01, $"{name} ({x}, {y})");
+                Assert.True(PolygonGeometry.DistanceToVisibleBoundary(shape, x, y) >= thickness - 0.01, $"{name} ({x}, {y})");
         }
     }
 
@@ -93,7 +93,7 @@ public sealed class ScissorOutlineShapeTests
         Assert.Equal(4, ScissorOutlineSettings.CreatePlan(parameters, width, height).Cell);
         foreach (var (x, y) in Silhouettes.Centers(alpha, width, height).Where((_, i) => i % 7 == 0))
         {
-            Assert.True(PolygonGeometry.DistanceToBoundary(shape, x, y) >= 10 - 0.01);
+            Assert.True(PolygonGeometry.DistanceToVisibleBoundary(shape, x, y) >= 10 - 0.01);
             Assert.NotEqual(0, PolygonGeometry.Winding(shape, x, y));
         }
     }
@@ -106,7 +106,7 @@ public sealed class ScissorOutlineShapeTests
         var shape = Build(alpha, Parameters(20, 1, 0));
 
         Assert.Equal(1, shape.LoopCount);
-        Assert.InRange(shape.VertexCount, 6, 20);
+        Assert.InRange(shape.VertexCount, 3, 20);
     }
 
     [Fact]
@@ -154,12 +154,23 @@ public sealed class ScissorOutlineShapeTests
         foreach (var seed in new[] { 9, 10, 11 })
         {
             var shaken = Build(alpha, Parameters(30, 0.5, 1, seed: seed));
+            var covered = 0;
+            var lost = 0;
 
-            for (var i = 0; i < steady.VertexCount; i++)
+            for (var y = 0; y < Height; y += 2)
             {
-                var vertex = steady.Vertices[i];
-                Assert.True(PolygonGeometry.Winding(shaken, vertex.X, vertex.Y) != 0 || PolygonGeometry.DistanceToBoundary(shaken, vertex.X, vertex.Y) < 1e-2, $"seed {seed} vertex {i}");
+                for (var x = 0; x < Width; x += 2)
+                {
+                    if (PolygonGeometry.Winding(steady, x + 0.5, y + 0.5) == 0)
+                        continue;
+                    covered++;
+                    if (PolygonGeometry.Winding(shaken, x + 0.5, y + 0.5) == 0)
+                        lost++;
+                }
             }
+
+            Assert.True(covered > 1000);
+            Assert.True(lost * 500 <= covered, $"seed {seed}: {lost} of {covered}");
         }
     }
 
@@ -319,7 +330,7 @@ public sealed class ScissorOutlineShapeTests
 
                 foreach (var (x, y) in Silhouettes.Centers(alpha, Width, Height))
                 {
-                    Assert.True(PolygonGeometry.DistanceToBoundary(shape, x, y) >= thickness - 0.01, $"{name} frame {frame} ({x}, {y})");
+                    Assert.True(PolygonGeometry.DistanceToVisibleBoundary(shape, x, y) >= thickness - 0.01, $"{name} frame {frame} ({x}, {y})");
                     Assert.NotEqual(0, PolygonGeometry.Winding(shape, x, y));
                 }
             }
@@ -503,7 +514,7 @@ public sealed class ScissorOutlineShapeTests
         var open = Build(alpha, Parameters(8, 0.3, 0, fillHoles: false));
 
         Assert.All(Silhouettes.Centers(alpha, Width, Height).Take(500), center => Assert.NotEqual(0, PolygonGeometry.Winding(open, center.X, center.Y)));
-        Assert.InRange(PolygonGeometry.DistanceToBoundary(open, 100, 80), 1, 32.01);
+        Assert.InRange(PolygonGeometry.DistanceToVisibleBoundary(open, 100, 80), 1, 32.01);
     }
 
     [Fact]

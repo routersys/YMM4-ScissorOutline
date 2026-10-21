@@ -62,7 +62,7 @@ public sealed class ScissorOutlineIrregularShapeTests
             var shape = Build(alpha, Parameters(thickness, coarseness, tremor, irregularity, quality, frame));
 
             foreach (var (x, y) in Silhouettes.Centers(alpha, Width, Height))
-                Assert.True(PolygonGeometry.DistanceToBoundary(shape, x, y) >= thickness - 0.01, $"{name} ({x}, {y})");
+                Assert.True(PolygonGeometry.DistanceToVisibleBoundary(shape, x, y) >= thickness - 0.01, $"{name} ({x}, {y})");
         }
     }
 
@@ -110,7 +110,7 @@ public sealed class ScissorOutlineIrregularShapeTests
 
                 foreach (var (x, y) in centers.Where((_, i) => i % 5 == 0))
                 {
-                    Assert.True(PolygonGeometry.DistanceToBoundary(shape, x, y) >= 16 - 0.01, $"seed {seed} frame {frame}");
+                    Assert.True(PolygonGeometry.DistanceToVisibleBoundary(shape, x, y) >= 16 - 0.01, $"seed {seed} frame {frame}");
                     Assert.NotEqual(0, PolygonGeometry.Winding(shape, x, y));
                 }
             }
@@ -226,7 +226,7 @@ public sealed class ScissorOutlineIrregularShapeTests
         shape.Build(second, Width, Height, Width, 0f, 0f, Parameters(20, 0.4, 0.5, 0.8, frame: 4));
 
         foreach (var (x, y) in Silhouettes.Centers(second, Width, Height))
-            Assert.True(PolygonGeometry.DistanceToBoundary(shape, x, y) >= 20 - 0.01);
+            Assert.True(PolygonGeometry.DistanceToVisibleBoundary(shape, x, y) >= 20 - 0.01);
     }
 
     [Fact]

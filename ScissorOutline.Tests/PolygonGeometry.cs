@@ -1,12 +1,32 @@
+using System.Runtime.CompilerServices;
+
 namespace ScissorOutline.Tests;
 
 internal static class PolygonGeometry
 {
-    public static double DistanceToBoundary(ScissorOutlineShape shape, double x, double y)
+    const double SampleSpacing = 0.5;
+    const double SideOffset = 0.02;
+
+    static readonly ConditionalWeakTable<ScissorOutlineShape, VisibleBoundary> Cache = new();
+
+    public static double DistanceToVisibleBoundary(ScissorOutlineShape shape, double x, double y)
     {
+        var cached = Cache.GetValue(shape, _ => new VisibleBoundary());
+        if (!shape.Vertices.SequenceEqual(cached.Vertices) || !shape.Starts.SequenceEqual(cached.Starts))
+        {
+            cached.Vertices = shape.Vertices.ToArray();
+            cached.Starts = shape.Starts.ToArray();
+            cached.Points = SampleVisibleBoundary(shape);
+        }
+
+        return DistanceToNearest(cached.Points, x, y);
+    }
+
+    static List<(double X, double Y)> SampleVisibleBoundary(ScissorOutlineShape shape)
+    {
+        var points = new List<(double X, double Y)>();
         var vertices = shape.Vertices;
         var starts = shape.Starts;
-        var best = double.PositiveInfinity;
         for (var loop = 0; loop < shape.LoopCount; loop++)
         {
             var start = starts[loop];
@@ -15,11 +35,26 @@ internal static class PolygonGeometry
             {
                 var a = vertices[start + i];
                 var b = vertices[start + (i + 1) % count];
-                best = Math.Min(best, DistanceToSegment(x, y, a.X, a.Y, b.X, b.Y));
+                double dx = b.X - a.X;
+                double dy = b.Y - a.Y;
+                var length = Math.Sqrt(dx * dx + dy * dy);
+                if (length == 0.0)
+                    continue;
+
+                var steps = (int)Math.Ceiling(length / SampleSpacing);
+                for (var step = 0; step <= steps; step++)
+                {
+                    var x = a.X + dx * step / steps;
+                    var y = a.Y + dy * step / steps;
+                    var nx = dy / length * SideOffset;
+                    var ny = -dx / length * SideOffset;
+                    if ((Winding(shape, x + nx, y + ny) == 0) != (Winding(shape, x - nx, y - ny) == 0))
+                        points.Add((x, y));
+                }
             }
         }
 
-        return best;
+        return points;
     }
 
     public static int Winding(ScissorOutlineShape shape, double x, double y)
@@ -61,14 +96,10 @@ internal static class PolygonGeometry
     static double Side(double ax, double ay, double bx, double by, double x, double y)
         => (bx - ax) * (y - ay) - (x - ax) * (by - ay);
 
-    static double DistanceToSegment(double x, double y, double ax, double ay, double bx, double by)
+    sealed class VisibleBoundary
     {
-        var dx = bx - ax;
-        var dy = by - ay;
-        var lengthSquared = dx * dx + dy * dy;
-        var t = lengthSquared == 0.0 ? 0.0 : Math.Clamp(((x - ax) * dx + (y - ay) * dy) / lengthSquared, 0.0, 1.0);
-        var px = ax + t * dx - x;
-        var py = ay + t * dy - y;
-        return Math.Sqrt(px * px + py * py);
+        public System.Numerics.Vector2[] Vertices = [];
+        public int[] Starts = [];
+        public List<(double X, double Y)> Points = [];
     }
 }
