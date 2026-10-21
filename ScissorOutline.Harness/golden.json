@@ -128,6 +128,51 @@
         0
       ],
       "hash": "0FD0A1462A93FF975736A8410313E9480378B012FCC591BA144313C53FC595E2"
+    },
+    {
+      "name": "irregularity-0",
+      "frames": [
+        0
+      ],
+      "hash": "14EA27F50D90DB2495AF4ACA8EED9AD6F6D30635F86BE746A3EF8FABB8E78982"
+    },
+    {
+      "name": "irregularity-100",
+      "frames": [
+        0
+      ],
+      "hash": "AFA1155A3C431A50DCB1A95CD3A64C1AD7BE2722BD16DA5E68DCBB3F2B0F2862"
+    },
+    {
+      "name": "irregularity-animated-frames",
+      "frames": [
+        0,
+        100,
+        200,
+        299
+      ],
+      "hash": "058C5DF1FF253DE27411532109271BA60A735D3843B76467743258B9143FC705"
+    },
+    {
+      "name": "hold-frames-3-frames",
+      "frames": [
+        0,
+        2,
+        3,
+        5,
+        6
+      ],
+      "hash": "2AACFF5C851227B671A531E5C3B46B5A940A29C7B8BC282028E169EFF83E1816"
+    },
+    {
+      "name": "hold-frames-1-frames",
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "hash": "694C94EECE1BA779F4792806F066455D01B098A659458F2A39ACC64CF445BA5D"
     }
   ]
 }
