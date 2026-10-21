@@ -79,6 +79,23 @@ public sealed class ScissorOutlineSettingsTests
     }
 
     [Fact]
+    public void TheThicknessSpreadWidensTheCellButNotTheMinimumRadiusFormula()
+    {
+        var parameters = new ScissorOutlineParameters(40, 0.5, 0.4, 0, true, ScissorOutlineQuality.High, 0.0, 0, 100.0, 200.0, 0.25);
+
+        var plan = ScissorOutlineSettings.CreatePlan(parameters, 1920, 1080);
+
+        Assert.Equal(16, plan.Cell);
+        Assert.Equal(20.0, plan.Epsilon);
+        Assert.Equal(16.0, plan.Tremor);
+        Assert.Equal(100.0, plan.Radius);
+        Assert.Equal(39, plan.RadiusSquaredCells);
+        Assert.Equal(100.0, plan.ThicknessSpread);
+        Assert.Equal(200.0, plan.SpreadWavelength);
+        Assert.Equal(0.25, plan.SpreadChange);
+    }
+
+    [Fact]
     public void WithoutIrregularityThePlanIsTheSameAsBefore()
     {
         var plain = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(40, 0.5, 0.4, 0, true, ScissorOutlineQuality.High), 1920, 1080);
@@ -124,9 +141,12 @@ public sealed class ScissorOutlineSettingsTests
                     {
                         foreach (var irregularity in new[] { 0.0, 0.5, 1.0 })
                         {
-                            var plan = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(thickness, ratio, 1.0 - ratio, 0, true, quality, irregularity), side, side);
+                            foreach (var spread in new[] { 0.0, 60.0, ScissorOutlineSettings.MaximumThicknessSpread })
+                            {
+                                var plan = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(thickness, ratio, 1.0 - ratio, 0, true, quality, irregularity, 0, spread), side, side);
 
-                            Assert.True(Math.Ceiling(plan.Radius / plan.Cell) + 2 <= ScissorOutlineSettings.PaddingCells);
+                                Assert.True(Math.Ceiling((plan.Radius + plan.ThicknessSpread) / plan.Cell) + 2 <= ScissorOutlineSettings.PaddingCells);
+                            }
                         }
                     }
                 }
@@ -151,11 +171,14 @@ public sealed class ScissorOutlineSettingsTests
     {
         var clamped = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(-5, -1, -1, 0, true, ScissorOutlineQuality.High, -3), 100, 100);
         var zero = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(0, 0, 0, 0, true, ScissorOutlineQuality.High), 100, 100);
-        var large = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(1e6, 5, 5, 0, true, ScissorOutlineQuality.High, 7), 100, 100);
-        var maximum = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(ScissorOutlineSettings.MaximumThickness, 1, 1, 0, true, ScissorOutlineQuality.High, 1), 100, 100);
+        var large = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(1e6, 5, 5, 0, true, ScissorOutlineQuality.High, 7, 0, 1e6, 1e9, 9), 100, 100);
+        var maximum = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(ScissorOutlineSettings.MaximumThickness, 1, 1, 0, true, ScissorOutlineQuality.High, 1, 0, ScissorOutlineSettings.MaximumThicknessSpread, ScissorOutlineSettings.MaximumSpreadWavelength, 1), 100, 100);
+        var tiny = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(0, 0, 0, 0, true, ScissorOutlineQuality.High, 0, 0, -3, -5, -1), 100, 100);
+        var floor = ScissorOutlineSettings.CreatePlan(new ScissorOutlineParameters(0, 0, 0, 0, true, ScissorOutlineQuality.High, 0, 0, 0, ScissorOutlineSettings.MinimumSpreadWavelength, 0), 100, 100);
 
         Assert.Equal(zero, clamped);
         Assert.Equal(maximum, large);
+        Assert.Equal(floor, tiny);
     }
 
     [Theory]
