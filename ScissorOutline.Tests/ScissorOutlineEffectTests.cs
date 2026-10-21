@@ -20,6 +20,9 @@ public sealed class ScissorOutlineEffectTests
 
     [Theory]
     [InlineData(nameof(ScissorOutlineEffect.Thickness), 24d, 0d, 500d)]
+    [InlineData(nameof(ScissorOutlineEffect.ThicknessSpread), 24d, 0d, 500d)]
+    [InlineData(nameof(ScissorOutlineEffect.SpreadWavelength), 120d, 16d, 2000d)]
+    [InlineData(nameof(ScissorOutlineEffect.SpreadChange), 50d, 0d, 100d)]
     [InlineData(nameof(ScissorOutlineEffect.Coarseness), 50d, 0d, 100d)]
     [InlineData(nameof(ScissorOutlineEffect.Irregularity), 0d, 0d, 100d)]
     [InlineData(nameof(ScissorOutlineEffect.Tremor), 50d, 0d, 100d)]
@@ -124,13 +127,13 @@ public sealed class ScissorOutlineEffectTests
     }
 
     [Fact]
-    public void TheFiveNumericParametersReceiveTheAnimationParameters()
+    public void TheEightNumericParametersReceiveTheAnimationParameters()
     {
         var effect = new ScissorOutlineEffect();
 
         effect.SetAnimationParameters(120, EffectDescriptions.Fps);
 
-        Assert.All([effect.Thickness, effect.Coarseness, effect.Irregularity, effect.Tremor, effect.Opacity], animation => Assert.Equal(120, animation.Length));
+        Assert.All([effect.Thickness, effect.ThicknessSpread, effect.SpreadWavelength, effect.SpreadChange, effect.Coarseness, effect.Irregularity, effect.Tremor, effect.Opacity], animation => Assert.Equal(120, animation.Length));
     }
 
     [Theory]
@@ -170,13 +173,16 @@ public sealed class ScissorOutlineEffectTests
 
     [Theory]
     [InlineData(nameof(ScissorOutlineEffect.Thickness), nameof(Texts.BasicGroup), nameof(Texts.Thickness), nameof(Texts.ThicknessDescription), 0)]
-    [InlineData(nameof(ScissorOutlineEffect.Coarseness), nameof(Texts.BasicGroup), nameof(Texts.Coarseness), nameof(Texts.CoarsenessDescription), 1)]
-    [InlineData(nameof(ScissorOutlineEffect.Irregularity), nameof(Texts.BasicGroup), nameof(Texts.Irregularity), nameof(Texts.IrregularityDescription), 2)]
-    [InlineData(nameof(ScissorOutlineEffect.Tremor), nameof(Texts.BasicGroup), nameof(Texts.Tremor), nameof(Texts.TremorDescription), 3)]
-    [InlineData(nameof(ScissorOutlineEffect.HoldFrames), nameof(Texts.BasicGroup), nameof(Texts.HoldFrames), nameof(Texts.HoldFramesDescription), 4)]
-    [InlineData(nameof(ScissorOutlineEffect.Seed), nameof(Texts.BasicGroup), nameof(Texts.Seed), nameof(Texts.SeedDescription), 5)]
-    [InlineData(nameof(ScissorOutlineEffect.FillHoles), nameof(Texts.BasicGroup), nameof(Texts.FillHoles), nameof(Texts.FillHolesDescription), 6)]
-    [InlineData(nameof(ScissorOutlineEffect.Quality), nameof(Texts.BasicGroup), nameof(Texts.Quality), nameof(Texts.QualityDescription), 7)]
+    [InlineData(nameof(ScissorOutlineEffect.ThicknessSpread), nameof(Texts.BasicGroup), nameof(Texts.ThicknessSpread), nameof(Texts.ThicknessSpreadDescription), 1)]
+    [InlineData(nameof(ScissorOutlineEffect.SpreadWavelength), nameof(Texts.BasicGroup), nameof(Texts.SpreadWavelength), nameof(Texts.SpreadWavelengthDescription), 2)]
+    [InlineData(nameof(ScissorOutlineEffect.SpreadChange), nameof(Texts.BasicGroup), nameof(Texts.SpreadChange), nameof(Texts.SpreadChangeDescription), 3)]
+    [InlineData(nameof(ScissorOutlineEffect.Coarseness), nameof(Texts.BasicGroup), nameof(Texts.Coarseness), nameof(Texts.CoarsenessDescription), 4)]
+    [InlineData(nameof(ScissorOutlineEffect.Irregularity), nameof(Texts.BasicGroup), nameof(Texts.Irregularity), nameof(Texts.IrregularityDescription), 5)]
+    [InlineData(nameof(ScissorOutlineEffect.Tremor), nameof(Texts.BasicGroup), nameof(Texts.Tremor), nameof(Texts.TremorDescription), 6)]
+    [InlineData(nameof(ScissorOutlineEffect.HoldFrames), nameof(Texts.BasicGroup), nameof(Texts.HoldFrames), nameof(Texts.HoldFramesDescription), 7)]
+    [InlineData(nameof(ScissorOutlineEffect.Seed), nameof(Texts.BasicGroup), nameof(Texts.Seed), nameof(Texts.SeedDescription), 8)]
+    [InlineData(nameof(ScissorOutlineEffect.FillHoles), nameof(Texts.BasicGroup), nameof(Texts.FillHoles), nameof(Texts.FillHolesDescription), 9)]
+    [InlineData(nameof(ScissorOutlineEffect.Quality), nameof(Texts.BasicGroup), nameof(Texts.Quality), nameof(Texts.QualityDescription), 10)]
     [InlineData(nameof(ScissorOutlineEffect.PaperColor), nameof(Texts.PaperGroup), nameof(Texts.PaperColor), nameof(Texts.PaperColorDescription), 10)]
     [InlineData(nameof(ScissorOutlineEffect.Opacity), nameof(Texts.PaperGroup), nameof(Texts.Opacity), nameof(Texts.OpacityDescription), 11)]
     public void EveryParameterIsDisplayedInItsGroupInOrder(string property, string group, string name, string description, int order)
@@ -192,6 +198,9 @@ public sealed class ScissorOutlineEffectTests
 
     [Theory]
     [InlineData(nameof(ScissorOutlineEffect.Thickness), "F1", "px", 0d, 200d)]
+    [InlineData(nameof(ScissorOutlineEffect.ThicknessSpread), "F1", "px", 0d, 200d)]
+    [InlineData(nameof(ScissorOutlineEffect.SpreadWavelength), "F1", "px", 16d, 400d)]
+    [InlineData(nameof(ScissorOutlineEffect.SpreadChange), "F1", "%", 0d, 100d)]
     [InlineData(nameof(ScissorOutlineEffect.Coarseness), "F1", "%", 0d, 100d)]
     [InlineData(nameof(ScissorOutlineEffect.Irregularity), "F1", "%", 0d, 100d)]
     [InlineData(nameof(ScissorOutlineEffect.Tremor), "F1", "%", 0d, 100d)]
@@ -261,6 +270,9 @@ public sealed class ScissorOutlineEffectTests
         effect.Tremor.Values[0].Value = 5d;
         effect.Irregularity.Values[0].Value = 90d;
         effect.Opacity.Values[0].Value = 60d;
+        effect.ThicknessSpread.Values[0].Value = 70d;
+        effect.SpreadWavelength.Values[0].Value = 250d;
+        effect.SpreadChange.Values[0].Value = 20d;
 
         var clone = Json.GetClone(effect)!;
 
@@ -275,5 +287,8 @@ public sealed class ScissorOutlineEffectTests
         Assert.Equal(5d, clone.Tremor.GetValue(0, 1, EffectDescriptions.Fps));
         Assert.Equal(90d, clone.Irregularity.GetValue(0, 1, EffectDescriptions.Fps));
         Assert.Equal(60d, clone.Opacity.GetValue(0, 1, EffectDescriptions.Fps));
+        Assert.Equal(70d, clone.ThicknessSpread.GetValue(0, 1, EffectDescriptions.Fps));
+        Assert.Equal(250d, clone.SpreadWavelength.GetValue(0, 1, EffectDescriptions.Fps));
+        Assert.Equal(20d, clone.SpreadChange.GetValue(0, 1, EffectDescriptions.Fps));
     }
 }
