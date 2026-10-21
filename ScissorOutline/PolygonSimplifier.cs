@@ -3,6 +3,7 @@ namespace ScissorOutline;
 internal sealed class PolygonSimplifier
 {
     private bool[] _keep = [];
+    private int[] _order = [];
     private int[] _stack = new int[64];
 
     public bool Simplify(ContourLoops source, int loop, double epsilon, ContourLoops destination, double spread = 0.0, uint variation = 0u)
@@ -24,24 +25,48 @@ internal sealed class PolygonSimplifier
         Reduce(points, count, first, second > first ? second : second + count, epsilon, spread, variation);
         Reduce(points, count, second, first > second ? first : first + count, epsilon, spread, variation);
 
+        if (_order.Length < count)
+            _order = new int[count];
         var kept = 0;
         for (var offset = 0; offset < count; offset++)
         {
-            var index = (first + offset) % count;
-            if (!_keep[index])
-                continue;
-            destination.AddPoint(points[index * 2], points[index * 2 + 1]);
-            kept++;
+            if (_keep[(first + offset) % count])
+                _order[kept++] = offset;
         }
 
         if (kept < 3)
-        {
-            destination.DiscardOpenLoop();
             return false;
+
+        for (var i = 0; i < kept; i++)
+        {
+            var from = first + _order[i];
+            var to = first + (i + 1 < kept ? _order[i + 1] : count);
+            destination.AddPoint(points[(from % count) * 2], points[(from % count) * 2 + 1], GetOutwardDeviation(points, count, from, to));
         }
 
         destination.CloseLoop();
         return true;
+    }
+
+    internal static double GetOutwardDeviation(ReadOnlySpan<int> points, int count, int begin, int end)
+    {
+        double px = points[(begin % count) * 2];
+        double py = points[(begin % count) * 2 + 1];
+        var dx = points[(end % count) * 2] - px;
+        var dy = points[(end % count) * 2 + 1] - py;
+        var length = Math.Sqrt(dx * dx + dy * dy);
+        if (length == 0.0)
+            return 0.0;
+
+        var best = 0.0;
+        for (var i = begin + 1; i < end; i++)
+        {
+            var rx = points[(i % count) * 2] - px;
+            var ry = points[(i % count) * 2 + 1] - py;
+            best = Math.Max(best, (dy * rx - dx * ry) / length);
+        }
+
+        return best;
     }
 
     private static int FindFirst(ReadOnlySpan<int> points, int count)
