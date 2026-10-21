@@ -22,44 +22,53 @@ internal sealed class DiscDilation
             _halfWidths[dy] = IntegerRoot(squaredRadius - dy * dy);
 
         var lastMask = (width & 63) == 0 ? ulong.MaxValue : (1UL << (width & 63)) - 1UL;
+        var spread = _spread.AsSpan(0, spreadLength);
+        var row = _row.AsSpan(0, wordsPerRow);
         for (var y = 0; y < height; y++)
         {
             var sourceRow = source.Slice(y * wordsPerRow, wordsPerRow);
             if (sourceRow.IndexOfAnyExcept(0UL) < 0)
                 continue;
 
-            var halfWidth = -1;
+            spread.Clear();
+            sourceRow.CopyTo(spread);
+            var halfWidth = 0;
+            var alignedWidth = -1;
             for (var dy = radius; dy >= 0; dy--)
             {
                 if (_halfWidths[dy] != halfWidth)
                 {
+                    Extend(spread, _halfWidths[dy] - halfWidth);
                     halfWidth = _halfWidths[dy];
-                    Spread(sourceRow, halfWidth, spreadLength, lastMask);
                 }
 
-                Merge(result, y + dy, height, wordsPerRow);
+                if (alignedWidth != halfWidth)
+                {
+                    ShiftDown(spread, halfWidth, row);
+                    row[^1] &= lastMask;
+                    alignedWidth = halfWidth;
+                }
+
+                Merge(result, row, y + dy, height, wordsPerRow);
                 if (dy > 0)
-                    Merge(result, y - dy, height, wordsPerRow);
+                    Merge(result, row, y - dy, height, wordsPerRow);
             }
         }
     }
 
-    private void Merge(Span<ulong> result, int y, int height, int wordsPerRow)
+    private static void Merge(Span<ulong> result, ReadOnlySpan<ulong> row, int y, int height, int wordsPerRow)
     {
         if ((uint)y >= (uint)height)
             return;
 
         var target = result.Slice(y * wordsPerRow, wordsPerRow);
         for (var i = 0; i < wordsPerRow; i++)
-            target[i] |= _row[i];
+            target[i] |= row[i];
     }
 
-    private void Spread(ReadOnlySpan<ulong> sourceRow, int halfWidth, int spreadLength, ulong lastMask)
+    private static void Extend(Span<ulong> spread, int extra)
     {
-        var spread = _spread.AsSpan(0, spreadLength);
-        spread.Clear();
-        sourceRow.CopyTo(spread);
-        var length = 2 * halfWidth + 1;
+        var length = 2 * extra + 1;
         var covered = 1;
         while (covered * 2 <= length)
         {
@@ -69,10 +78,6 @@ internal sealed class DiscDilation
 
         if (covered < length)
             ShiftUpOr(spread, length - covered);
-
-        var row = _row.AsSpan(0, sourceRow.Length);
-        ShiftDown(spread, halfWidth, row);
-        row[^1] &= lastMask;
     }
 
     private static void ShiftUpOr(Span<ulong> bits, int shift)
