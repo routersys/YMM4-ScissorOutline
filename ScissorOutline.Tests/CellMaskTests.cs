@@ -73,6 +73,75 @@ public sealed class CellMaskTests
         Assert.Equal(Scalar(alpha, width, height, stride, cell), bits);
     }
 
+    public static readonly TheoryData<int, int, int, int, int> Pooled = new()
+    {
+        { 1, 1, 2, 1, 1 },
+        { 17, 11, 16, 4, 2 },
+        { 131, 18, 2, 1, 3 },
+        { 300, 100, 4, 2, 4 },
+        { 301, 99, 8, 3, 5 },
+        { 257, 65, 16, 4, 6 },
+        { 201, 71, 32, 4, 7 },
+        { 130, 17, 64, 4, 8 },
+    };
+
+    [Theory]
+    [MemberData(nameof(Pooled))]
+    public void AMaskOfAPooledImageMatchesTheMaskOfTheFullImage(int width, int height, int cell, int level, int seed)
+    {
+        var stride = width + 3;
+        var alpha = new byte[stride * height];
+        var state = (uint)seed * 2654435761u + 11u;
+        for (var i = 0; i < alpha.Length; i++)
+        {
+            state = state * 1664525u + 1013904223u;
+            var roll = (state >> 8) % 400;
+            alpha[i] = roll < 2 ? (byte)(ScissorOutlineSettings.AlphaThreshold + 1 + (state >> 16) % 247) : roll < 5 ? (byte)(1 + (state >> 16) % ScissorOutlineSettings.AlphaThreshold) : (byte)0;
+        }
+
+        alpha[(height - 1) * stride + width - 1] = 255;
+        var block = 1 << level;
+        var pooledWidth = (width + block - 1) / block;
+        var pooledHeight = (height + block - 1) / block;
+        var pooledStride = pooledWidth + 2;
+        var pooled = new byte[pooledStride * pooledHeight];
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                if (alpha[y * stride + x] > ScissorOutlineSettings.AlphaThreshold)
+                    pooled[(y >> level) * pooledStride + (x >> level)] = (byte)(1 + (x * 7 + y * 3) % 255);
+            }
+        }
+
+        var gridWidth = (width + cell - 1) / cell + 2 * Padding;
+        var gridHeight = (height + cell - 1) / cell + 2 * Padding;
+        var full = new ulong[BitGrid.WordsPerRow(gridWidth) * gridHeight];
+        var fromPooled = new ulong[full.Length];
+
+        CellMask.Build(alpha, width, height, stride, cell, gridWidth, full);
+        CellMask.Build(pooled, pooledWidth, pooledHeight, pooledStride, cell >> level, gridWidth, fromPooled, 0);
+
+        Assert.Contains(full, word => word != 0);
+        Assert.Equal(full, fromPooled);
+    }
+
+    [Fact]
+    public void WithAZeroThresholdAnyNonZeroValueIsASubject()
+    {
+        var values = new byte[8 * 8];
+        values[0] = 1;
+        values[9] = 0;
+        values[63] = 255;
+
+        var gridWidth = 8 + 2 * Padding;
+        var bits = new ulong[BitGrid.WordsPerRow(gridWidth) * gridWidth];
+        CellMask.Build(values, 8, 8, 8, 1, gridWidth, bits, 0);
+
+        var cells = Masks.ToBytes(bits, gridWidth, gridWidth);
+        Assert.Equal(new HashSet<int> { IndexOf(gridWidth, 0, 0), IndexOf(gridWidth, 7, 7) }, Enumerable.Range(0, cells.Length).Where(i => cells[i] != 0).ToHashSet());
+    }
+
     [Fact]
     public void ACellIsASubjectWhenAnyPixelOfItsBlockIsVisible()
     {
