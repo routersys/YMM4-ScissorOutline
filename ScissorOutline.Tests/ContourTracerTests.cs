@@ -104,6 +104,16 @@ public sealed class ContourTracerTests
     }
 
     [Fact]
+    public void EachLoopStartsAtItsFirstCornerInRasterOrder()
+    {
+        var loops = Trace(["......", ".#....", ".....#", "......"]);
+
+        Assert.Equal(2, loops.LoopCount);
+        Assert.Equal([(2, 1), (2, 2), (1, 2), (1, 1)], Loop(loops, 0));
+        Assert.Equal([(6, 2), (6, 3), (5, 3), (5, 2)], Loop(loops, 1));
+    }
+
+    [Fact]
     public void NothingInsideGivesNoLoops()
     {
         var loops = Trace(["...", "...", "..."]);
