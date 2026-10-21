@@ -57,7 +57,10 @@ internal sealed class ScissorOutlineShape
             _hasSubject = _cells.AsSpan(0, size).IndexOfAnyExcept(0UL) >= 0;
         }
 
-        var shapeKey = new ShapeKey(cellKey, plan.RadiusSquaredCells, plan.Epsilon, plan.Tremor, parameters.Seed, parameters.FillHoles, originX, originY);
+        var randomized = plan.Tremor > 0.0 || plan.EpsilonSpread > 0.0 || plan.Distance > 0.0;
+        var seed = randomized ? parameters.Seed : 0;
+        var frame = randomized ? parameters.Frame : 0;
+        var shapeKey = new ShapeKey(cellKey, plan.RadiusSquaredCells, plan.Epsilon, plan.EpsilonSpread, plan.Tremor, plan.Distance, seed, frame, parameters.FillHoles, originX, originY);
         if (!cellsChanged && _hasShape && shapeKey == _shapeKey)
             return ScissorOutlineShapeChange.Unchanged;
 
@@ -80,20 +83,21 @@ internal sealed class ScissorOutlineShape
             _hasTraced = true;
         }
 
+        var variation = ScissorOutlineJitter.Variation(seed, frame);
         _simplified.Clear();
         var epsilonCells = plan.Epsilon / plan.Cell;
         for (var loop = 0; loop < _traced.LoopCount; loop++)
         {
             if (parameters.FillHoles && _traced.GetDoubleArea(loop) < 0)
                 continue;
-            _simplifier.Simplify(_traced, loop, epsilonCells, _simplified);
+            _simplifier.Simplify(_traced, loop, epsilonCells, _simplified, plan.EpsilonSpread, variation);
         }
 
-        Emit(plan, originX, originY, parameters.Seed);
+        Emit(plan, originX, originY, variation);
         return ScissorOutlineShapeChange.Rebuilt;
     }
 
-    private void Emit(in ScissorOutlinePlan plan, float originX, float originY, int seed)
+    private void Emit(in ScissorOutlinePlan plan, float originX, float originY, uint variation)
     {
         if (_vertices.Length < _simplified.PointCount)
             _vertices = new Vector2[Math.Max(_simplified.PointCount, _vertices.Length * 2)];
@@ -101,14 +105,28 @@ internal sealed class ScissorOutlineShape
             _starts = new int[Math.Max(_simplified.LoopCount + 1, _starts.Length * 2)];
 
         var points = _simplified.Points;
-        for (var i = 0; i < _simplified.PointCount; i++)
+        var starts = _simplified.Starts;
+        for (var loop = 0; loop < _simplified.LoopCount; loop++)
         {
-            var x = (points[i * 2] - ScissorOutlineSettings.PaddingCells) * plan.Cell;
-            var y = (points[i * 2 + 1] - ScissorOutlineSettings.PaddingCells) * plan.Cell;
-            var vertex = new Vector2(originX + x, originY + y);
-            if (plan.Tremor > 0.0)
-                vertex += ScissorOutlineJitter.GetOffset(x, y, ScissorOutlineJitter.Variation(seed, 0), plan.Tremor);
-            _vertices[i] = vertex;
+            var start = starts[loop];
+            var count = starts[loop + 1] - start;
+            for (var k = 0; k < count; k++)
+            {
+                var index = start + k;
+                var x = (points[index * 2] - ScissorOutlineSettings.PaddingCells) * plan.Cell;
+                var y = (points[index * 2 + 1] - ScissorOutlineSettings.PaddingCells) * plan.Cell;
+                var vertex = new Vector2(originX + x, originY + y);
+                if (plan.Distance > 0.0)
+                {
+                    var previous = start + (k + count - 1) % count;
+                    var next = start + (k + 1) % count;
+                    vertex += GetOutwardNormal(points, previous, index, next) * (float)(plan.Distance * ScissorOutlineJitter.GetWave(x, y, plan.Wavelength, variation));
+                }
+
+                if (plan.Tremor > 0.0)
+                    vertex += ScissorOutlineJitter.GetOffset(x, y, variation, plan.Tremor);
+                _vertices[index] = vertex;
+            }
         }
 
         _simplified.Starts.CopyTo(_starts);
@@ -116,7 +134,27 @@ internal sealed class ScissorOutlineShape
         VertexCount = _simplified.PointCount;
     }
 
+    private static Vector2 GetOutwardNormal(ReadOnlySpan<int> points, int previous, int index, int next)
+    {
+        double incomingX = points[index * 2] - points[previous * 2];
+        double incomingY = points[index * 2 + 1] - points[previous * 2 + 1];
+        double outgoingX = points[next * 2] - points[index * 2];
+        double outgoingY = points[next * 2 + 1] - points[index * 2 + 1];
+        var incomingLength = Math.Sqrt(incomingX * incomingX + incomingY * incomingY);
+        var outgoingLength = Math.Sqrt(outgoingX * outgoingX + outgoingY * outgoingY);
+        var normalX = (incomingLength > 0.0 ? incomingY / incomingLength : 0.0) + (outgoingLength > 0.0 ? outgoingY / outgoingLength : 0.0);
+        var normalY = (incomingLength > 0.0 ? -incomingX / incomingLength : 0.0) + (outgoingLength > 0.0 ? -outgoingX / outgoingLength : 0.0);
+        var length = Math.Sqrt(normalX * normalX + normalY * normalY);
+        if (length < 1e-9)
+        {
+            var fallback = outgoingLength > 0.0 ? outgoingLength : incomingLength;
+            return fallback > 0.0 ? new Vector2((float)((outgoingLength > 0.0 ? outgoingY : incomingY) / fallback), (float)((outgoingLength > 0.0 ? -outgoingX : -incomingX) / fallback)) : Vector2.Zero;
+        }
+
+        return new Vector2((float)(normalX / length), (float)(normalY / length));
+    }
+
     private readonly record struct CellKey(int Width, int Height, int Cell);
 
-    private readonly record struct ShapeKey(CellKey Cells, int RadiusSquaredCells, double Epsilon, double Tremor, int Seed, bool FillHoles, float OriginX, float OriginY);
+    private readonly record struct ShapeKey(CellKey Cells, int RadiusSquaredCells, double Epsilon, double EpsilonSpread, double Tremor, double Distance, int Seed, int Frame, bool FillHoles, float OriginX, float OriginY);
 }
