@@ -114,6 +114,36 @@ public sealed class ThicknessFieldTests
     }
 
     [Fact]
+    public void TheValuesInterpolateTheLatticeWithTheSmoothFadeAtTheCenterOfEachCell()
+    {
+        const int cell = 4;
+        const double wavelength = 100.0;
+        const uint fixedVariation = 3;
+        const uint frameVariation = 17;
+        const double change = 0.5;
+        var values = Field(cell, wavelength, fixedVariation, frameVariation, change);
+
+        double Node(int x, int y)
+            => ScissorOutlineJitter.GetThicknessLattice(x, y, fixedVariation) * Math.Cos(change * Math.PI / 2.0)
+                + ScissorOutlineJitter.GetThicknessLattice(x, y, frameVariation) * Math.Sin(change * Math.PI / 2.0);
+
+        foreach (var (x, y) in new[] { (0, 0), (21, 5), (22, 22), (40, 33), (100, 60), (159, 89) })
+        {
+            var u = (x - ScissorOutlineSettings.PaddingCells + 0.5) * cell / wavelength;
+            var v = (y - ScissorOutlineSettings.PaddingCells + 0.5) * cell / wavelength;
+            var column = (int)Math.Floor(u);
+            var row = (int)Math.Floor(v);
+            var fadeX = ScissorOutlineJitter.Fade(u - column);
+            var fadeY = ScissorOutlineJitter.Fade(v - row);
+            var top = Node(column, row) + (Node(column + 1, row) - Node(column, row)) * fadeX;
+            var bottom = Node(column, row + 1) + (Node(column + 1, row + 1) - Node(column, row + 1)) * fadeX;
+            var expected = Math.Clamp(0.5 + ScissorOutlineSettings.ThicknessContrast * (top + (bottom - top) * fadeY), 0.0, 1.0);
+
+            Assert.Equal(expected, values[y * Width + x], 1e-9);
+        }
+    }
+
+    [Fact]
     public void TheSameInstanceFillsDifferentSizesCorrectly()
     {
         var field = new ThicknessField();
