@@ -6,4 +6,6 @@ internal readonly record struct ScissorOutlineParameters(
     double Tremor,
     int Seed,
     bool FillHoles,
-    ScissorOutlineQuality Quality);
+    ScissorOutlineQuality Quality,
+    double Irregularity = 0.0,
+    int Frame = 0);
